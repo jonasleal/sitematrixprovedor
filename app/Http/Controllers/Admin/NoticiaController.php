@@ -59,4 +59,17 @@ class NoticiaController extends Controller
         
         return redirect()->back()->with('success', 'Notícia eliminada com sucesso!');
     }
+
+    public function uploadImagem(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'file' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+        ]);
+
+        $path = $request->file('file')->store('noticias/conteudo', 'public');
+
+        return response()->json([
+            'location' => asset('storage/' . $path)
+        ]);
+    }
 }

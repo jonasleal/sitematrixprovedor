@@ -13,9 +13,9 @@ class SgpService
 
     public function __construct()
     {
-        $this->url = rtrim(env('SGP_API_URL', 'https://matrix.sgp.tsmx.app'), '/');
-        $this->app = env('SGP_APP_ID', 'SiteMatrix');
-        $this->token = env('SGP_APP_TOKEN', '5f510256-6c73-44fe-8af3-889536242230');
+        $this->url = rtrim(env('SGP_API_URL'), '/');
+        $this->app = env('SGP_APP_NAME');
+        $this->token =env('SGP_TOKEN');
     }
 
     public function getPlanos()

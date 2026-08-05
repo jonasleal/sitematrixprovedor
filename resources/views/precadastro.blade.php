@@ -1,7 +1,22 @@
 @extends('layouts.site')
 
 @section('content')
-    <main class="flex-grow pt-28 pb-12 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <main 
+        x-data="{ 
+            mostrarToast: false, 
+            mensagemToast: '', 
+            tipoToast: 'sucesso', // 'sucesso' ou 'erro'
+            
+            dispararAlerta(mensagem, tipo) {
+                this.mensagemToast = mensagem;
+                this.tipoToast = tipo;
+                this.mostrarToast = true;
+                setTimeout(() => this.mostrarToast = false, 5000); // Some após 5 segundos
+            }
+        }"
+        @mostrar-toast.window="dispararAlerta($event.detail.msg, $event.detail.tipo)"
+        class="flex-grow pt-28 pb-12 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative"
+    >
         <div class="text-center mb-10">
             <h1 class="text-3xl md:text-4xl font-bold text-white mb-4 text-glow">Falta pouco para você ser Matrix!</h1>
             <p class="text-gray-300">Complete seus dados abaixo para analisarmos a viabilidade final e agendarmos sua instalação.</p>
@@ -121,7 +136,8 @@
                 Concluir Pré-Cadastro
             </button>
         </form>
-		<div id="modal-cpf-duplicado" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm">
+
+        <div id="modal-cpf-duplicado" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm">
             <div class="glass p-8 rounded-2xl border border-white/10 max-w-md w-full mx-4 text-center relative transform scale-95 transition-transform duration-300" id="modal-cpf-content">
                 <button onclick="fecharModalWhatsapp()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -144,6 +160,46 @@
                 </a>
             </div>
         </div>
+
+        <div id="modal-sucesso" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm">
+            <div class="glass p-8 rounded-2xl border border-white/10 max-w-md w-full mx-4 text-center relative transform scale-95 transition-transform duration-300" id="modal-sucesso-content">
+                
+                <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-500/20 mb-6 border-2 border-green-500/50">
+                    <svg class="h-10 w-10 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                
+                <h3 class="text-3xl font-bold text-white mb-2 text-glow">Tudo Certo!</h3>
+                <p class="text-gray-300 mb-6 text-lg">
+                    Seu pré-cadastro foi recebido com sucesso. Nossa equipe entrará em contato pelo WhatsApp em breve para confirmar o seu cadastro!
+                </p>
+                
+                <a href="/" class="block w-full bg-green-500 hover:bg-green-600 text-black py-4 rounded-xl font-bold text-lg hover:shadow-[0_0_20px_rgba(34,197,94,0.5)] transition duration-300">
+                    Voltar para o Início
+                </a>
+            </div>
+        </div>
+
+        <div x-show="mostrarToast" 
+             x-transition.duration.500ms
+             class="fixed bottom-5 right-5 z-50 flex items-center p-4 mb-4 w-full max-w-xs rounded-lg shadow text-white backdrop-blur-md bg-white/10 border"
+             :class="tipoToast === 'sucesso' ? 'border-green-500/50' : 'border-red-500/50'"
+             style="display: none;">
+             
+            <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg"
+                 :class="tipoToast === 'sucesso' ? 'bg-green-100 text-green-500' : 'bg-red-100 text-red-500'">
+                <svg x-show="tipoToast === 'sucesso'" class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/></svg>
+                <svg x-show="tipoToast === 'erro'" class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.5 11.5a1 1 0 0 1-1.414 1.414L10 11.414l-2.086 2.086a1 1 0 0 1-1.414-1.414L8.586 10 6.5 7.914a1 1 0 0 1 1.414-1.414L10 8.586l2.086-2.086a1 1 0 0 1 1.414 1.414L11.414 10l2.086 2.086Z"/></svg>
+            </div>
+            
+            <div class="ms-3 text-sm font-normal" x-text="mensagemToast"></div>
+            
+            <button @click="mostrarToast = false" type="button" class="ms-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex items-center justify-center h-8 w-8 hover:bg-white/20 text-gray-300 hover:text-white">
+                <span class="sr-only">Fechar</span>
+                <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/></svg>
+            </button>
+        </div>
     </main>
 
     <script>
@@ -165,6 +221,11 @@
             if(document.getElementById('logradouro').value) document.getElementById('numero').focus();
             else document.getElementById('nome').focus();
         });
+
+        // Função utilitária para chamar o Toast do Alpine via Javascript Puro
+        function notificar(mensagem, tipo = 'erro') {
+            window.dispatchEvent(new CustomEvent('mostrar-toast', { detail: { msg: mensagem, tipo: tipo } }));
+        }
 
         async function buscarCep() {
             const inputCep = document.getElementById('cep');
@@ -195,11 +256,15 @@
             const input = document.getElementById(idCampo);
             if (!input) return;
 
-            // Pinta a borda de vermelho
+            // Pinta a borda de vermelho e adiciona um anel de destaque (Ring) piscante
             input.classList.remove('border-gray-600', 'focus:border-cyan-400', 'focus:border-pink-400');
-            input.classList.add('border-red-500', 'focus:border-red-500');
+            input.classList.add('border-red-500', 'focus:border-red-500', 'ring-4', 'ring-red-500/30', 'animate-pulse');
 
-            // Cria ou atualiza a mensagem de texto embaixo do campo
+            // Remove o efeito de piscar após 2 segundos, mas mantém a borda vermelha
+            setTimeout(() => {
+                input.classList.remove('ring-4', 'ring-red-500/30', 'animate-pulse');
+            }, 2000);
+
             let msgErro = document.getElementById('erro-msg-' + idCampo);
             if (!msgErro) {
                 msgErro = document.createElement('p');
@@ -211,16 +276,13 @@
         }
 
         function limparErrosVisuais() {
-            // Remove as bordas vermelhas e restaura as originais
             document.querySelectorAll('input').forEach(input => {
                 input.classList.remove('border-red-500', 'focus:border-red-500');
                 if(!input.classList.contains('border-gray-600')) input.classList.add('border-gray-600');
             });
-            // Apaga as mensagens de texto
             document.querySelectorAll('.erro-dinamico').forEach(el => el.remove());
         }
 
-        // Validação básica do algoritmo de CPF em JS para não precisar ir até o SGP à toa
         function validarCpf(cpf) {
             cpf = cpf.replace(/\D/g, '');
             if(cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
@@ -236,20 +298,17 @@
             if(resto !== parseInt(cpf.substring(10, 11))) return false;
             return true;
         }
-		function abrirModalWhatsappDuplicado(cpf) {
+        
+        function abrirModalWhatsappDuplicado(cpf) {
             const modal = document.getElementById('modal-cpf-duplicado');
             const content = document.getElementById('modal-cpf-content');
             const btnWhats = document.getElementById('btn-whatsapp-duplicado');
 
-            // === AQUI VOCÊ COLOCA O NÚMERO DA SUA EMPRESA (COM CÓDIGO DO PAÍS E DDD) ===
-            const numeroEmpresa = '558796136109'; // Ex: 55 + DDD + Numero
-            
+            const numeroEmpresa = '558796136109'; 
             const textoPronto = `Olá! Tentei assinar um plano pelo site, mas o sistema informou que meu CPF (${cpf}) já possui cadastro. Podem me ajudar a dar andamento?`;
             
-            // Monta o link mágico do WhatsApp
             btnWhats.href = `https://wa.me/${numeroEmpresa}?text=${encodeURIComponent(textoPronto)}`;
 
-            // Exibe o modal com efeito suave
             modal.classList.remove('hidden');
             setTimeout(() => {
                 modal.classList.remove('opacity-0');
@@ -275,13 +334,13 @@
             
             const btn = document.getElementById('btn-submit');
             
-            // 1. VERIFICAÇÕES BÁSICAS FRONTEND
             let temErroFront = false;
             let primeiroCampoErro = null;
 
             const planoSelecionado = document.querySelector('input[name="plano_id"]:checked');
             if(!planoSelecionado) {
-                alert("Por favor, selecione um plano de internet acima.");
+                // SUBSTITUIÇÃO 1
+                notificar("Por favor, selecione um plano de internet acima.", "erro");
                 return;
             }
 
@@ -300,12 +359,10 @@
             }
 
             if (temErroFront) {
-                // Rola a tela suavemente para o primeiro erro encontrado
                 primeiroCampoErro.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return; // Para a execução aqui, nem chega a ir pro servidor
+                return; 
             }
 
-            // Tudo certo no Frontend, prepara para enviar!
             btn.innerText = "Processando...";
             btn.disabled = true;
 
@@ -336,22 +393,37 @@
                 });
 
                 if(res.ok) {
-                    alert("Sucesso! Seu pré-cadastro foi enviado. Nossa equipe entrará em contato pelo WhatsApp em instantes.");
+                    // 1. Dispara o Confete!
+                    confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#22c55e', '#008CCC', '#ffffff', '#f2167dff'] // Cores da Matrix (Verde, Azul, Branco, Rosa)
+                    });
+
+                    // 2. Mostra o Modal de Sucesso Escurecendo a tela
+                    const modalSucesso = document.getElementById('modal-sucesso');
+                    const contentSucesso = document.getElementById('modal-sucesso-content');
+                    
+                    modalSucesso.classList.remove('hidden');
+                    setTimeout(() => {
+                        modalSucesso.classList.remove('opacity-0');
+                        contentSucesso.classList.remove('scale-95');
+                    }, 50);
+
                     sessionStorage.removeItem('plano_escolhido_matrix');
-                    window.location.href = "/";
+                    
+                    
                 } else {
-                    // SE O SERVIDOR RECUSAR (Erro 422/402)
                     const err = await res.json();
                     
-                    // INTELIGÊNCIA: Se for CPF duplicado, abre o modal na hora!
                     if (err.is_cpf_duplicado) {
                         abrirModalWhatsappDuplicado(cpfDigitado);
                         btn.innerText = "Concluir Pré-Cadastro";
                         btn.disabled = false;
-                        return; // Para a execução aqui
+                        return;
                     }
 
-                    // Se não for duplicado, segue com a pintura de borda vermelha normal
                     if (err.details && typeof err.details === 'object') {
                         let focado = false;
                         for (const [campo, mensagens] of Object.entries(err.details)) {
@@ -366,17 +438,21 @@
                             }
                         }
                     } else {
-                        alert(err.message || "Erro desconhecido. Tente novamente.");
+                        // SUBSTITUIÇÃO 3
+                        notificar(err.message || "Erro desconhecido. Tente novamente.", "erro");
                     }
                     
                     btn.innerText = "Concluir Pré-Cadastro";
                     btn.disabled = false;
                 }
             } catch (error) {
-                alert("Falha de conexão com os servidores Matrix.");
+                // SUBSTITUIÇÃO 4
+                notificar("Falha de conexão com os servidores Matrix.", "erro");
                 btn.innerText = "Concluir Pré-Cadastro";
                 btn.disabled = false;
             }
         }
+
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 @endsection

@@ -1,7 +1,7 @@
 <section id="planos" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative no-select">
     <div class="text-center mb-12">
         <h2 class="text-3xl font-bold text-white mb-2 text-glow">Escolha sua velocidade ideal</h2>
-        <p class="text-gray-400">Instalação 100% grátis e roteador incluso.</p>
+        <p class="text-gray-400">Instalação 100% grátis e roteador incluso nos planos de permanência de 12 meses.</p>
     </div>
 
     <div class="relative group">

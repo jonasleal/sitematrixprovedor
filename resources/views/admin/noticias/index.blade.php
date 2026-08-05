@@ -37,6 +37,16 @@
                             <input type="text" name="titulo" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm sm:text-sm">
                         </div>
 
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tag do Balão (Categoria)</label>
+                            <input type="text" name="tag" value="{{ old('tag', $noticia->tag ?? '') }}" placeholder="Ex: Expansão, Comunicado, Promoção" class="w-full bg-black/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-green-400 focus:outline-none">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data de Publicação (Deixe em branco para data atual)</label>
+                            <input type="datetime-local" name="publicado_em" value="{{ old('publicado_em', isset($noticia->publicado_em) ? \Carbon\Carbon::parse($noticia->publicado_em)->format('Y-m-d\TH:i') : '') }}" class="w-full bg-black/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-green-400 focus:outline-none [color-scheme:dark]">
+                        </div>
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Imagem de Destaque (Opcional)</label>
                             <input type="file" name="imagem_destaque" accept="image/*" class="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400">
@@ -50,7 +60,7 @@
 
                     <div class="md:col-span-2">
                         <div class="flex justify-between items-center mb-1">
-                            <label class="block text-sm font-bold text-gray-200">Conteúdo Completo da Matéria</label>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Conteúdo Completo</label>
                             <span class="text-xs text-indigo-400 font-semibold">Clique no ícone <b>&lt; &gt;</b> para editar o HTML diretamente.</span>
                         </div>
                         

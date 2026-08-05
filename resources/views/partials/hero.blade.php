@@ -8,6 +8,6 @@
         Ultravelocidade, estabilidade e suporte local de verdade.<br>
     </p>
     <a href="#planos" class="btn-accent text-white px-8 py-4 rounded-full text-lg font-bold shadow-[0_0_20px_rgba(129,199,0,0.4)] hover:shadow-[0_0_30px_rgba(129,199,0,0.6)] transition duration-300">
-        Assine Agora
+        Conheça nossos planos!
     </a>
 </section>

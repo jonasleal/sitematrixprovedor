@@ -17,7 +17,7 @@
         </nav>
         
         <div>
-            <!-- Coloque aqui a URL real da Central do Assinante do SGP -->
+            <!-- Variavel para  Central do Assinante do SGP -->
             <a href="{{ $configGlobal->link_central_assinante ?? '#' }}" target="_blank" class="border border-green-400 text-green-400 hover:bg-green-400 hover:text-gray-900 px-5 py-2 rounded-full font-bold transition duration-300">
                 CENTRAL DO CLIENTE
             </a>

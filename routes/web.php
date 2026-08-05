@@ -19,6 +19,7 @@ use App\Http\Controllers\PreCadastroController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\PoligonoController;
 use App\Models\LeadCobertura;
+use App\Models\Noticia;
 
 // ==========================================
 // ROTAS PÚBLICAS (O SITE)
@@ -32,8 +33,18 @@ Route::get('/planos-disponiveis', [HomeController::class, 'precadastro'])->name(
 Route::get('/sobre', function () {
     return view('sobre');
 });
+// Rota da Listagem de Notícias
 Route::get('/noticias', function () {
-	return view('noticias'); });
+    // Puxa as notícias ativas, da mais recente para a mais antiga, com paginação
+    $noticias = Noticia::where('ativo', true)->orderBy('created_at', 'desc')->paginate(9);
+    return view('noticias', compact('noticias'));
+});
+
+// Rota de Leitura da Notícia Específica
+Route::get('/noticia/{slug}', function ($slug) {
+    $noticia = Noticia::where('slug', $slug)->where('ativo', true)->firstOrFail();
+    return view('noticia-interna', compact('noticia'));
+});
 	
 
 
@@ -84,6 +95,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/noticias', [\App\Http\Controllers\Admin\NoticiaController::class, 'index'])->name('admin.noticias.index');
     Route::post('/admin/noticias', [\App\Http\Controllers\Admin\NoticiaController::class, 'store'])->name('admin.noticias.store');
     Route::delete('/admin/noticias/{id}', [\App\Http\Controllers\Admin\NoticiaController::class, 'destroy'])->name('admin.noticias.destroy');
+    Route::post('/admin/noticias/upload-imagem', [App\Http\Controllers\Admin\NoticiaController::class, 'uploadImagem'])->name('admin.noticias.upload-imagem');
 	// 8 . Banners
 	// Rotas de Banners Avançados
     Route::get('/admin/banners', [\App\Http\Controllers\Admin\BannerController::class, 'index'])->name('admin.banners.index');
