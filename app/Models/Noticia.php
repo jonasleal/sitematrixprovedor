@@ -16,27 +16,27 @@ class Noticia extends Model
         'resumo',
         'conteudo',
         'imagem_destaque',
-        'data_publicacao',
-        'tag',
-        'ativo'
+        'ativo',
+        'banner_tag_id',
+        'publicado_em',
     ];
 
     protected $casts = [
-        'data_publicacao' => 'datetime',
+        'publicado_em' => 'datetime',
         'ativo' => 'boolean',
     ];
 
     // Data por extenso em Português (ex: 05 de Agosto, 2026)
     public function getDataFormatadaAttribute()
     {
-        $data = $this->data_publicacao ?? $this->created_at;
+        $data = $this->publicado_em ?? $this->created_at;
         return Carbon::parse($data)->locale('pt_BR')->translatedFormat('d \d\e F, Y');
     }
 
     // Data curta (ex: 05/08/2026)
     public function getDataCurtaAttribute()
     {
-        $data = $this->data_publicacao ?? $this->created_at;
+        $data = $this->publicado_em ?? $this->created_at;
         return Carbon::parse($data)->format('d/m/Y');
     }
 }

@@ -3,18 +3,25 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+
 use Illuminate\Http\Request;
-use App\Models\Noticia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+
+use App\Models\Noticia;
+use App\Models\BannerTag;
+
 
 class NoticiaController extends Controller
 {
     public function index()
     {
-        // Traz as notícias mais recentes primeiro
-        $noticias = Noticia::orderBy('created_at', 'desc')->get();
-        return view('admin.noticias.index', compact('noticias'));
+        $noticias = Noticia::orderBy('created_at', 'desc')->paginate(10);
+        
+        // PUXANDO AS TAGS PARA ENVIAR PRO FORMULÁRIO
+        $tags = BannerTag::orderBy('nome', 'asc')->get(); 
+        
+        return view('admin.noticias.index', compact('noticias', 'tags'));
     }
 
     public function store(Request $request)

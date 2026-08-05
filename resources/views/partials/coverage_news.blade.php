@@ -107,7 +107,7 @@
                         @endphp
                         
                         <a href="{{ url('/noticia/' . $noticia->slug) }}" class="block glass p-5 rounded-xl hover:bg-white/10 transition border-l-4 {{ $corAtual }} group">
-                            <span class="text-xs text-gray-500 font-bold mb-1 block {{ $textoAtual }}">{{ $noticia->created_at->format('d/m/Y') }}</span>
+                            <span class="text-xs text-gray-500 font-bold mb-1 block {{ $textoAtual }}">{{ \Carbon\Carbon::parse($noticia->publicado_em)->format('d/m/Y') }}</span>
                             <h4 class="text-white font-semibold mb-1">{{ $noticia->titulo }}</h4>
                             <p class="text-gray-400 text-sm line-clamp-2">{{ $noticia->resumo }}</p>
                         </a>
