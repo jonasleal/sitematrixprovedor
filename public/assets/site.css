@@ -1,0 +1,69 @@
+/* Importação das fontes locais (Inter) */
+@font-face {
+    font-family: 'Inter';
+    src: url('/assets/inter-400.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Inter';
+    src: url('/assets/inter-600.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Inter';
+    src: url('/assets/inter-800.woff2') format('woff2');
+    font-weight: 800;
+    font-style: normal;
+}
+
+body { 
+    font-family: 'Inter', sans-serif; 
+    overflow-x: hidden; /* Mantém o site sem rolagem horizontal global */
+    background-color: #111827; 
+}
+
+/* Fundo principal usando a imagem de Garanhuns */
+.hero-bg {
+    background-image: linear-gradient(to bottom, rgba(4, 8, 74, 0.7), rgba(4, 8, 74, 0.9)), url('/assets/relogio-flores.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+/* Efeito de vidro (Glassmorphism) */
+.glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-accent {
+    background: linear-gradient(90deg, #81c700, #00c7a9);
+}
+
+.text-glow {
+    text-shadow: 0 0 10px rgba(129,199,0,0.5);
+}
+
+/* === MOTOR DO CARROSSEL === */
+/* Oculta a barra do carrossel sem quebrar o CSS */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.hide-scrollbar {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+}
+
+.no-select {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+.grab-scroll { cursor: grab !important; }
+.grab-scroll:active { cursor: grabbing !important; }

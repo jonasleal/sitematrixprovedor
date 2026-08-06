@@ -1,0 +1,9 @@
+/* /assets/base.css - Carregado em TUDO */
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; src: url('/assets/inter-400.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; src: url('/assets/inter-600.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 800; src: url('/assets/inter-800.woff2') format('woff2'); }
+
+body { font-family: 'Inter', sans-serif; }
+.glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+.btn-accent { background: linear-gradient(90deg, #81c700, #00c7a9); }
+.text-glow { text-shadow: 0 0 10px rgba(129,199,0,0.5); }
