@@ -122,4 +122,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('/admin/paginas', PaginaController::class)->names('admin.paginas');
 });
 
+// Rota de Bloqueio (Futuramente consultará o SGP pelo IP do cliente)
+Route::get('/aviso/bloqueio', function (\Illuminate\Http\Request $request) {
+    // Exemplo de como você vai capturar o IP real do cliente depois:
+    // $ipCliente = $request->ip();
+    
+    // Por enquanto, envia uma variável estática para testar a View
+    $nomeCliente = 'Cliente'; 
+    
+    return view('avisos.bloqueio', compact('nomeCliente'));
+})->name('aviso.bloqueio');
+
+// Rota de Manutenção
+Route::get('/aviso/manutencao', function () {
+    return view('avisos.manutencao');
+})->name('aviso.manutencao');
+
 require __DIR__.'/auth.php';
