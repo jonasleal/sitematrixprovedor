@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\SgpController;
 use App\Http\Controllers\Admin\PlanoDetalheController;
 use App\Http\Controllers\PreCadastroController;
 use App\Http\Controllers\PaginaController;
+use App\Http\Controllers\DownloadController;
 
 // ==========================================
 // IMPORTS DOS CONTROLADORES DO ADMIN
@@ -30,6 +31,8 @@ use App\Models\Noticia;
 Route::get('/', [HomeController::class, 'index']);
 
 Route::get('/planos-disponiveis', [HomeController::class, 'precadastro'])->name('precadastro');
+// Central de Downloads Pública
+Route::get('/p/downloads', [DownloadController::class, 'showPublic'])->name('downloads.show');
 
 Route::get('/sobre', function () {
     return view('sobre');
@@ -51,6 +54,8 @@ Route::get('/noticia/{slug}', function ($slug) {
     $noticia = Noticia::where('slug', $slug)->where('ativo', true)->firstOrFail();
     return view('noticia-interna', compact('noticia'));
 });
+
+
 
 	
 
@@ -120,6 +125,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/admin/tags/{id}', [\App\Http\Controllers\Admin\TagController::class, 'destroy'])->name('admin.tags.destroy');
     // 10. Páginas Institucionais Dinâmicas
     Route::resource('/admin/paginas', PaginaController::class)->names('admin.paginas');
+    // 11. CRUD da Central de Downloads
+    Route::resource('/admin/downloads', DownloadController::class)->names('admin.downloads');
 });
 
 // Rota de Bloqueio (Futuramente consultará o SGP pelo IP do cliente)
