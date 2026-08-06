@@ -34,6 +34,9 @@
 					<x-nav-link :href="route('admin.noticias.index')" :active="request()->routeIs('admin.noticias.*')">
 						{{ __('Notícias e Avisos') }}
 					</x-nav-link>
+                    <x-nav-link :href="route('admin.paginas.index')" :active="request()->routeIs('admin.paginas.*')">
+                        {{ __('Páginas') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -101,6 +104,9 @@
 			<x-responsive-nav-link :href="route('admin.configuracoes.index')" :active="request()->routeIs('admin.configuracoes.*')">
 				{{ __('Configurações Globais') }}
 			</x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('admin.paginas.index')" :active="request()->routeIs('admin.paginas.*')">
+                {{ __('Páginas') }}
+            </x-responsive-nav-link>
         </div>
 		
 

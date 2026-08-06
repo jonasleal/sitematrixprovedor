@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\CoberturaController;
 use App\Http\Controllers\Api\SgpController;
 use App\Http\Controllers\Admin\PlanoDetalheController;
 use App\Http\Controllers\PreCadastroController;
+use App\Http\Controllers\PaginaController;
 
 // ==========================================
 // IMPORTS DOS CONTROLADORES DO ADMIN
@@ -33,6 +34,8 @@ Route::get('/planos-disponiveis', [HomeController::class, 'precadastro'])->name(
 Route::get('/sobre', function () {
     return view('sobre');
 });
+// Rota de Páginas Dinâmicas Institucionais
+Route::get('/p/{slug}', [PaginaController::class, 'showPublic'])->name('pagina.show');
 // Rota da Listagem de Notícias
 Route::get('/noticias', function () {
     // Puxa as notícias ativas, da mais recente para a mais antiga, com paginação
@@ -48,6 +51,7 @@ Route::get('/noticia/{slug}', function ($slug) {
     $noticia = Noticia::where('slug', $slug)->where('ativo', true)->firstOrFail();
     return view('noticia-interna', compact('noticia'));
 });
+
 	
 
 
@@ -114,6 +118,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/admin/tags', [\App\Http\Controllers\Admin\TagController::class, 'store'])->name('admin.tags.store');
     Route::put('/admin/tags/{id}', [\App\Http\Controllers\Admin\TagController::class, 'update'])->name('admin.tags.update');
     Route::delete('/admin/tags/{id}', [\App\Http\Controllers\Admin\TagController::class, 'destroy'])->name('admin.tags.destroy');
+    // 10. Páginas Institucionais Dinâmicas
+    Route::resource('/admin/paginas', PaginaController::class)->names('admin.paginas');
 });
 
 require __DIR__.'/auth.php';

@@ -14,6 +14,7 @@
     document.addEventListener("DOMContentLoaded", function() {
         tinymce.init({
             selector: '#{{ $editorId }}',
+            extended_valid_elements: "svg[*],use[*],path[*],circle[*],polygon[*],line[*],rect[*],g[*]",
             plugins: 'code lists link image table preview fullscreen',
             toolbar: 'undo redo | blocks | bold italic strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist | link image | code fullscreen',
             menubar: false,

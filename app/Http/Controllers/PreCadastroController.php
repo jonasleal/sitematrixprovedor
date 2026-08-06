@@ -100,4 +100,5 @@ class PreCadastroController extends Controller
             return response()->json(['message' => 'Erro fatal de comunicação.', 'details' => []], 500);
         }
     }
+
 }
