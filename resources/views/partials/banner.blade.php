@@ -59,7 +59,8 @@
                      
                     <div class="h-1/2 md:h-full w-full {{ $txtClass }} p-8 md:p-12 text-left flex flex-col justify-center z-10 relative">
                         <span class="bg-gradient-to-r {{ $estilo['badge'] }} text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block self-start z-10 w-max">
-                            {{ $banner->categoria_tag ?: 'Destaque' }}
+                            <!-- CORREÇÃO AQUI: Busca o nome usando a relação do model -->
+                            {{ $banner->tag->nome ?? 'Destaque' }}
                         </span>
                         
                         <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 z-10 w-full">

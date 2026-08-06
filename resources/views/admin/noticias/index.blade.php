@@ -5,7 +5,7 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-12" x-data="{ modalTags: false }">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             
             @if(session('success'))
@@ -37,18 +37,24 @@
                             <input type="text" name="titulo" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm sm:text-sm">
                         </div>
 
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tag do Balão (Categoria)</label>
-                            <input type="text" name="tag" value="{{ old('tag', $noticia->tag ?? '') }}" placeholder="Ex: Expansão, Comunicado, Promoção" class="w-full bg-black/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-green-400 focus:outline-none">
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data de Publicação (Deixe em branco para data atual)</label>
-                            <input type="datetime-local" name="publicado_em" value="{{ old('publicado_em', isset($noticia->publicado_em) ? \Carbon\Carbon::parse($noticia->publicado_em)->format('Y-m-d\TH:i') : '') }}" class="w-full bg-black/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:border-green-400 focus:outline-none [color-scheme:dark]">
+                        <!-- Chamada do Componente Universal de Tags -->
+                        <div>
+                            <x-select-tag :tags="$tags" :selecionada="old('tag_id', $noticia->tag_id ?? '')" />
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Imagem de Destaque (Opcional)</label>
+                            <label for="publicado_em" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Data de Publicação
+                            </label>
+                            <input type="date" 
+                                name="publicado_em" 
+                                id="publicado_em"
+                                value="{{ old('publicado_em', date('Y-m-d')) }}" 
+                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm sm:text-sm [color-scheme:dark]">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Imagem de Destaque (Opcional)</label>
                             <input type="file" name="imagem_destaque" accept="image/*" class="mt-1 block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400">
                         </div>
                     </div>
@@ -93,8 +99,13 @@
                         @endif
                         
                         <div class="p-4 flex-1 flex flex-col">
-                            <h4 class="font-bold text-gray-900 dark:text-white line-clamp-1">{{ $noticia->titulo }}</h4>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $noticia->created_at->format('d/m/Y') }}</p>
+                            <h4 class="font-bold text-gray-900 dark:text-white line-clamp-2">
+                                @if($noticia->tag)
+                                    <span class="text-[10px] bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded uppercase mr-1 inline-block align-middle">{{ $noticia->tag->nome }}</span>
+                                @endif
+                                <span class="align-middle">{{ $noticia->titulo }}</span>
+                            </h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Publicado em: {{ \Carbon\Carbon::parse($noticia->publicado_em ?? $noticia->created_at)->format('d/m/Y') }}</p>
                             <p class="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2 flex-1">{{ $noticia->resumo }}</p>
                             
                             <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -102,19 +113,29 @@
                                     {{ $noticia->ativo ? 'Ativa' : 'Oculta' }}
                                 </span>
                                 
-                                <form action="{{ route('admin.noticias.destroy', $noticia->id) }}" method="POST" onsubmit="return confirm('Tem a certeza que deseja eliminar esta notícia?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-500 hover:text-red-700">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
-                                </form>
+                                <!-- Agrupando os botões -->
+                                <div class="flex items-center gap-3">
+                                    <!-- Novo Botão Editar -->
+                                    <a href="{{ route('admin.noticias.edit', $noticia->id) }}" class="text-indigo-400 hover:text-indigo-600 transition" title="Editar Notícia">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    </a>
+
+                                    <!-- Botão Excluir -->
+                                    <form action="{{ route('admin.noticias.destroy', $noticia->id) }}" method="POST" onsubmit="return confirm('Tem a certeza que deseja eliminar esta notícia?');" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-500 hover:text-red-700 transition" title="Excluir Notícia">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
                 @endforeach
             </div>
-
+            <x-modal-tags :tags="$tags" />
         </div>
     </div>
+    
 </x-app-layout>

@@ -17,10 +17,13 @@ class Noticia extends Model
         'conteudo',
         'imagem_destaque',
         'ativo',
-        'banner_tag_id',
+        'tag_id',
         'publicado_em',
     ];
-
+    public function tag()
+    {
+        return $this->belongsTo(\App\Models\Tag::class, 'tag_id');
+    }
     protected $casts = [
         'publicado_em' => 'datetime',
         'ativo' => 'boolean',

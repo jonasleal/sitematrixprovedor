@@ -9,12 +9,16 @@
     </a>
 
     <article class="glass p-8 md:p-12 rounded-3xl border border-white/10 relative">
-        <div class="flex items-center gap-3 mb-4">
-            <span class="bg-green-400/20 text-green-400 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-green-400/30">
-                {{ $noticia->tag ?? 'INFORMATIVO' }}
-            </span>
-            <span class="text-sm text-gray-400 font-medium">
-                {{ $noticia->data_formatada }}
+        <div class="text-sm text-green-400 font-bold mb-3 tracking-widest uppercase flex items-center gap-3">
+    
+            @if($noticia->tag)
+                <span class="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-md border border-green-500/30">
+                    {{ $noticia->tag->nome }}
+                </span>
+            @endif
+            
+            <span>
+                {{ \Carbon\Carbon::parse($noticia->publicado_em ?? $noticia->created_at)->locale('pt_BR')->translatedFormat('d \d\e F, Y') }}
             </span>
         </div>
         

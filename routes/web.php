@@ -36,7 +36,10 @@ Route::get('/sobre', function () {
 // Rota da Listagem de Notícias
 Route::get('/noticias', function () {
     // Puxa as notícias ativas, da mais recente para a mais antiga, com paginação
-    $noticias = Noticia::where('ativo', true)->orderBy('created_at', 'desc')->paginate(9);
+    $noticias = Noticia::where('ativo', true)
+            ->orderByRaw('COALESCE(publicado_em, created_at) DESC')
+            ->paginate(9);
+            
     return view('noticias', compact('noticias'));
 });
 
@@ -94,6 +97,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 	// 7. Notícias
     Route::get('/admin/noticias', [\App\Http\Controllers\Admin\NoticiaController::class, 'index'])->name('admin.noticias.index');
     Route::post('/admin/noticias', [\App\Http\Controllers\Admin\NoticiaController::class, 'store'])->name('admin.noticias.store');
+    Route::get('/admin/noticias/{id}/edit', [\App\Http\Controllers\Admin\NoticiaController::class, 'edit'])->name('admin.noticias.edit');
+    Route::put('/admin/noticias/{id}', [\App\Http\Controllers\Admin\NoticiaController::class, 'update'])->name('admin.noticias.update');
     Route::delete('/admin/noticias/{id}', [\App\Http\Controllers\Admin\NoticiaController::class, 'destroy'])->name('admin.noticias.destroy');
     Route::post('/admin/noticias/upload-imagem', [App\Http\Controllers\Admin\NoticiaController::class, 'uploadImagem'])->name('admin.noticias.upload-imagem');
 	// 8 . Banners
@@ -104,9 +109,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/admin/banners/{id}/toggle', [\App\Http\Controllers\Admin\BannerController::class, 'toggleStatus'])->name('admin.banners.toggle');
     Route::post('/admin/banners/reordenar', [\App\Http\Controllers\Admin\BannerController::class, 'reordenar'])->name('admin.banners.reordenar');
     Route::delete('/admin/banners/{id}', [\App\Http\Controllers\Admin\BannerController::class, 'destroy'])->name('admin.banners.destroy');
-	// Rotas de Gerenciamento de Tags do Balão    
-    Route::post('/admin/banner-tags', [\App\Http\Controllers\Admin\BannerController::class, 'storeTag'])->name('admin.banner-tags.store');
-    Route::delete('/admin/banner-tags/{id}', [\App\Http\Controllers\Admin\BannerController::class, 'destroyTag'])->name('admin.banner-tags.destroy');
+    // 9 . TAGs
+    // Rotas de Gerenciamento de Tags Globais (Banners e Notícias)    
+    Route::post('/admin/tags', [\App\Http\Controllers\Admin\TagController::class, 'store'])->name('admin.tags.store');
+    Route::put('/admin/tags/{id}', [\App\Http\Controllers\Admin\TagController::class, 'update'])->name('admin.tags.update');
+    Route::delete('/admin/tags/{id}', [\App\Http\Controllers\Admin\TagController::class, 'destroy'])->name('admin.tags.destroy');
 });
 
 require __DIR__.'/auth.php';

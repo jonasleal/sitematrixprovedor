@@ -64,4 +64,8 @@ class Banner extends Model
     {
         return $this->parseShortcodes($this->descricao, false);
     }
+    public function tag()
+    {
+        return $this->belongsTo(\App\Models\Tag::class, 'tag_id');
+    }
 }

@@ -48,7 +48,8 @@
                         
                         <span class="text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block shadow-md text-gray-900 w-max"
                               :class="badgeColorClass(form.tema_cor)">
-                            <span x-text="form.categoria_tag || 'DESTAQUE'"></span>
+                            <!-- A Mágica do Preview: Busca o nome da tag pelo ID selecionado -->
+                            <span x-text="getNomeTag(form.tag_id) || 'DESTAQUE'"></span>
                         </span>
                         
                         <h3 class="font-bold text-white mb-4 leading-tight w-full" 
@@ -93,16 +94,7 @@
                     <template x-if="modoEdicao"><input type="hidden" name="_method" value="PUT"></template>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Tag do Balão</label>
-                            <div class="flex gap-2">
-                                <select name="categoria_tag" x-model="form.categoria_tag" class="block w-full rounded-lg border-gray-300 bg-white text-sm">
-                                    <option value="">Selecione...</option>
-                                    @foreach($tags as $tag)<option value="{{ $tag->nome }}">{{ $tag->nome }}</option>@endforeach
-                                </select>
-                                <button type="button" @click="modalTags = true" class="bg-indigo-600 text-white px-3 rounded-lg text-xs font-bold">Tags</button>
-                            </div>
-                        </div>
+                        <x-select-tag :tags="$tags" x-model="form.tag_id" />
 
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-1">Tema de Cores</label>
@@ -249,7 +241,8 @@
                                 
                                 <div class="space-y-1">
                                     <span class="text-[10px] px-2.5 py-0.5 rounded-full font-extrabold uppercase border {{ $badgeStyle }}">
-                                        {{ $banner->categoria_tag }}
+                                        <!-- Alterado para buscar a relação Tag -->
+                                        {{ $banner->tag->nome ?? 'DESTAQUE' }}
                                     </span>
                                     <h4 class="font-bold text-gray-900 text-base leading-snug line-clamp-1">{!! strip_tags($banner->titulo_formatado) !!}</h4>
                                 </div>
@@ -295,46 +288,45 @@
                 </div>
             </div>
 
-            <div x-show="modalTags" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4" x-cloak>
-                <div class="bg-white border border-gray-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-                    <div class="flex justify-between items-center border-b border-gray-200 pb-3">
-                        <h3 class="text-lg font-bold text-gray-900">Gerenciar Tags</h3>
-                        <button @click="modalTags = false" class="text-gray-500 hover:text-gray-900 text-xl font-bold">&times;</button>
-                    </div>
-                    <form action="{{ route('admin.banner-tags.store') }}" method="POST" class="flex gap-2">
-                        @csrf
-                        <input type="text" name="nome" required placeholder="Nova Tag..." class="block w-full rounded-lg border-gray-300 text-sm uppercase focus:border-indigo-500">
-                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded-lg text-xs">Add</button>
-                    </form>
-                    <div class="space-y-2 max-h-60 overflow-y-auto pt-2">
-                        @foreach($tags as $t)
-                            <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-lg border border-gray-200 text-xs text-gray-700">
-                                <span class="font-bold">{{ $t->nome }}</span>
-                                <form action="{{ route('admin.banner-tags.destroy', $t->id) }}" method="POST">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="text-red-500 hover:text-red-700 font-bold">&times; Remover</button>
-                                </form>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-
+            <!-- Modal de Tags Mantido Intacto -->
+            <x-modal-tags :tags="$tags" />
         </div>
     </div>
 
     <script>
         function bannerAdmin() {
             return {
+                // Injeta as tags vindas do backend para o JavaScript
+                tagsList: @json($tags),
                 imagePreview: null,
                 imageMobilePreview: null,
                 modalTags: false,
                 modoEdicao: false,
                 viewMobile: false,
                 form: {
-                    id: null, categoria_tag: '', tema_cor: 'green-cyan', proporcao_imagem: '50', titulo: '', descricao: '', texto_botao: '', link_destino: '', posicao_x: 50, posicao_y: 50, zoom: 100, ativo: true, data_inicio: '', data_fim: ''
+                    id: null, 
+                    tag_id: '', // Atualizado de categoria_tag para tag_id
+                    tema_cor: 'green-cyan', 
+                    proporcao_imagem: '50', 
+                    titulo: '', 
+                    descricao: '', 
+                    texto_botao: '', 
+                    link_destino: '', 
+                    posicao_x: 50, 
+                    posicao_y: 50, 
+                    zoom: 100, 
+                    ativo: true, 
+                    data_inicio: '', 
+                    data_fim: ''
                 },
                 
+                // Nova função para buscar o NOME da tag baseado no ID selecionado
+                getNomeTag(id) {
+                    if (!id) return '';
+                    const tag = this.tagsList.find(t => t.id == id);
+                    return tag ? tag.nome : '';
+                },
+
                 // BARRA DE FERRAMENTAS MÁGICA
                 insertTag(refName, fieldName, tag) {
                     const el = this.$refs[refName];
@@ -358,17 +350,27 @@
 
                 previewImage(e) { if(e.target.files[0]) this.imagePreview = URL.createObjectURL(e.target.files[0]); },
                 previewMobileImage(e) { if(e.target.files[0]) this.imageMobilePreview = URL.createObjectURL(e.target.files[0]); },
+                
                 carregarParaEdicao(banner) {
                     this.modoEdicao = true;
-                    this.form = { ...banner, proporcao_imagem: banner.proporcao_imagem || '50', ativo: Boolean(banner.ativo), data_inicio: banner.data_inicio ? banner.data_inicio.replace(' ', 'T').substring(0, 16) : '', data_fim: banner.data_fim ? banner.data_fim.replace(' ', 'T').substring(0, 16) : '' };
+                    this.form = { 
+                        ...banner, 
+                        tag_id: banner.tag_id || '', // Atualizado para carregar o ID da tag
+                        proporcao_imagem: banner.proporcao_imagem || '50', 
+                        ativo: Boolean(banner.ativo), 
+                        data_inicio: banner.data_inicio ? banner.data_inicio.replace(' ', 'T').substring(0, 16) : '', 
+                        data_fim: banner.data_fim ? banner.data_fim.replace(' ', 'T').substring(0, 16) : '' 
+                    };
                     this.imagePreview = banner.caminho_imagem ? `/storage/${banner.caminho_imagem}` : null;
                     this.imageMobilePreview = banner.caminho_imagem_mobile ? `/storage/${banner.caminho_imagem_mobile}` : null;
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
+                
                 cancelarEdicao() {
                     this.modoEdicao = false; this.imagePreview = null; this.imageMobilePreview = null;
-                    this.form = { id: null, categoria_tag: '', tema_cor: 'green-cyan', proporcao_imagem: '50', titulo: '', descricao: '', texto_botao: '', link_destino: '', posicao_x: 50, posicao_y: 50, zoom: 100, ativo: true, data_inicio: '', data_fim: '' };
+                    this.form = { id: null, tag_id: '', tema_cor: 'green-cyan', proporcao_imagem: '50', titulo: '', descricao: '', texto_botao: '', link_destino: '', posicao_x: 50, posicao_y: 50, zoom: 100, ativo: true, data_inicio: '', data_fim: '' };
                 },
+                
                 parseShortcodes(text, isTitulo = false) {
                     if (!text) return ''; let result = text.replace(/\n/g, '<br>');
                     let grad = this.form.tema_cor === 'pink-purple' ? 'from-pink-400 to-purple-400' : (this.form.tema_cor === 'orange-yellow' ? 'from-amber-300 to-orange-400' : 'from-green-400 to-cyan-400');
@@ -382,24 +384,29 @@
                     result = result.replace(/\[direita\](.*?)\[\/direita\]/gi, `<div class="text-right w-full block">$1</div>`);
                     return result;
                 },
+                
                 badgeColorClass(tema) { return tema === 'pink-purple' ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white' : (tema === 'orange-yellow' ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900' : 'bg-gradient-to-r from-green-400 to-cyan-500 text-gray-900'); },
+                
                 tituloPreview() {
                     if (this.viewMobile) return "Preview Mobile (400x700px)";
                     let txt = 100 - parseInt(this.form.proporcao_imagem);
                     return `Preview Desktop | Área Exata do Site | Texto: ${txt}% - Imagem: ${this.form.proporcao_imagem}%`;
                 },
+                
                 imagemWidthClass() {
                     if (this.viewMobile) return 'w-full';
                     if (this.form.proporcao_imagem == '60') return 'md:w-3/5';
                     if (this.form.proporcao_imagem == '40') return 'md:w-2/5';
                     return 'md:w-1/2';
                 },
+                
                 textoWidthClass() {
                     if (this.viewMobile) return 'w-full';
                     if (this.form.proporcao_imagem == '60') return 'md:w-2/5';
                     if (this.form.proporcao_imagem == '40') return 'md:w-3/5';
                     return 'md:w-1/2';
                 },
+                
                 initSortable() {
                     const el = document.getElementById('lista-banners');
                     if (!el) return;

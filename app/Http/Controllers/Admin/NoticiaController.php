@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+
 use App\Models\Noticia;
 use App\Models\BannerTag;
 
@@ -19,7 +20,7 @@ class NoticiaController extends Controller
         $noticias = Noticia::orderBy('created_at', 'desc')->paginate(10);
         
         // PUXANDO AS TAGS PARA ENVIAR PRO FORMULÁRIO
-        $tags = BannerTag::orderBy('nome', 'asc')->get(); 
+        $tags = \App\Models\Tag::orderBy('nome', 'asc')->get();
         
         return view('admin.noticias.index', compact('noticias', 'tags'));
     }
@@ -31,6 +32,7 @@ class NoticiaController extends Controller
             'titulo' => 'required|string|max:255|unique:noticias,titulo',
             'resumo' => 'required|string|max:500',
             'conteudo' => 'required|string',
+            'tag_id' => 'nullable|exists:tags,id',
             'imagem_destaque' => 'nullable|image|max:2048',
         ]);
 
@@ -78,5 +80,46 @@ class NoticiaController extends Controller
         return response()->json([
             'location' => asset('storage/' . $path)
         ]);
+    }
+
+    public function edit($id)
+    {
+        $noticia = Noticia::findOrFail($id);
+        $tags = \App\Models\Tag::orderBy('nome', 'asc')->get();
+        return view('admin.noticias.edit', compact('noticia', 'tags'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $noticia = Noticia::findOrFail($id);
+
+        $data = $request->validate([
+            'titulo' => 'required|string|max:255',
+            'resumo' => 'required|string',
+            'conteudo' => 'required|string',
+            'tag_id' => 'nullable|exists:tags,id',
+            'publicado_em' => 'nullable|date',
+        ]);
+
+        $data['ativo'] = $request->has('ativo');
+        
+        // Atualiza o slug caso o título tenha mudado
+        if ($noticia->titulo !== $request->titulo) {
+            $data['slug'] = Str::slug($request->titulo) . '-' . uniqid();
+        }
+
+        // Verifica se enviou uma imagem nova
+        if ($request->hasFile('imagem_destaque')) {
+            $request->validate(['imagem_destaque' => 'image|max:2048']);
+            // Apaga a antiga
+            if ($noticia->imagem_destaque) {
+                Storage::disk('public')->delete($noticia->imagem_destaque);
+            }
+            $data['imagem_destaque'] = $request->file('imagem_destaque')->store('noticias', 'public');
+        }
+
+        $noticia->update($data);
+
+        return redirect()->route('admin.noticias.index')->with('success', 'Notícia atualizada com sucesso!');
     }
 }

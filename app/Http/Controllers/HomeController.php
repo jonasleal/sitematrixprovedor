@@ -116,7 +116,10 @@ class HomeController extends Controller
             ->get();
 
         // Traz apenas as 3 últimas notícias ativas (para não lotar a página inicial)
-        $noticias = Noticia::where('ativo', true)->orderBy('created_at', 'desc')->take(3)->get();
+        $noticias = Noticia::where('ativo', true)
+            ->orderByRaw('COALESCE(publicado_em, created_at) DESC')
+            ->take(3)
+            ->get();
 
         // Envia tudo para o HTML (welcome.blade.php)
         return view('welcome', [

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Banner;
-use App\Models\BannerTag;
+use App\Models\Tag;
 use Illuminate\Support\Facades\Storage;
 
 class BannerController extends Controller
@@ -19,7 +19,7 @@ class BannerController extends Controller
     public function index()
     {
         $banners = Banner::orderBy('ordem', 'asc')->get();
-        $tags = BannerTag::orderBy('nome', 'asc')->get();
+        $tags = Tag::orderBy('nome', 'asc')->get();
         return view('admin.banners.index', compact('banners', 'tags'));
     }
 
@@ -29,6 +29,7 @@ class BannerController extends Controller
             'caminho_imagem' => 'required|image|max:1024',
             'caminho_imagem_mobile' => 'nullable|image|max:1024',
             'titulo'         => 'required|string',
+            'tag_id'         => 'nullable|exists:tags,id',
             'tema_cor'       => 'required|string',
         ], $this->mensagensErro);
 
@@ -39,7 +40,7 @@ class BannerController extends Controller
 
         Banner::create([
             'titulo'        => $request->titulo,
-            'categoria_tag' => $request->categoria_tag ?: 'DESTAQUE MATRIX',
+            'tag_id'        => $request->tag_id,
             'tema_cor'      => $request->tema_cor,
             'descricao'     => $request->descricao,
             'texto_botao'   => $request->texto_botao ?: 'Saiba Mais',
@@ -67,6 +68,7 @@ class BannerController extends Controller
             'caminho_imagem' => 'nullable|image|max:1024',
             'caminho_imagem_mobile' => 'nullable|image|max:1024',
             'titulo'         => 'required|string',
+            'tag_id'         => 'nullable|exists:tags,id',
             'tema_cor'       => 'required|string',
         ], $this->mensagensErro);
 
@@ -82,7 +84,7 @@ class BannerController extends Controller
 
         $banner->update([
             'titulo'        => $request->titulo,
-            'categoria_tag' => $request->categoria_tag,
+            'tag_id'        => $request->tag_id,
             'tema_cor'      => $request->tema_cor,
             'descricao'     => $request->descricao,
             'texto_botao'   => $request->texto_botao,
@@ -99,10 +101,26 @@ class BannerController extends Controller
         return redirect()->back()->with('success', 'Banner atualizado com sucesso!');
     }
 
-    // Mantém as outras funções: toggleStatus, reordenar, storeTag, destroyTag e destroy intactas...
-    public function toggleStatus($id) { $banner = Banner::findOrFail($id); $banner->ativo = !$banner->ativo; $banner->save(); return redirect()->back()->with('success', 'Status do banner alterado!'); }
-    public function reordenar(Request $request) { $ordem = $request->input('ordem', []); foreach ($ordem as $item) { Banner::where('id', $item['id'])->update(['ordem' => $item['ordem']]); } return response()->json(['status' => 'success']); }
-    public function storeTag(Request $request) { $request->validate(['nome' => 'required|string|max:100|unique:banner_tags,nome']); BannerTag::create(['nome' => strtoupper(trim($request->nome))]); return redirect()->back()->with('success', 'Nova tag adicionada!'); }
-    public function destroyTag($id) { BannerTag::findOrFail($id)->delete(); return redirect()->back()->with('success', 'Tag removida!'); }
-    public function destroy($id) { $banner = Banner::findOrFail($id); if ($banner->caminho_imagem) { Storage::disk('public')->delete($banner->caminho_imagem); } if ($banner->caminho_imagem_mobile) { Storage::disk('public')->delete($banner->caminho_imagem_mobile); } $banner->delete(); return redirect()->back()->with('success', 'Banner excluído!'); }
+    public function toggleStatus($id) { 
+        $banner = Banner::findOrFail($id); 
+        $banner->ativo = !$banner->ativo; 
+        $banner->save(); 
+        return redirect()->back()->with('success', 'Status do banner alterado!'); 
+    }
+    
+    public function reordenar(Request $request) { 
+        $ordem = $request->input('ordem', []); 
+        foreach ($ordem as $item) { 
+            Banner::where('id', $item['id'])->update(['ordem' => $item['ordem']]); 
+        } 
+        return response()->json(['status' => 'success']); 
+    }
+    
+    public function destroy($id) { 
+        $banner = Banner::findOrFail($id); 
+        if ($banner->caminho_imagem) Storage::disk('public')->delete($banner->caminho_imagem); 
+        if ($banner->caminho_imagem_mobile) Storage::disk('public')->delete($banner->caminho_imagem_mobile); 
+        $banner->delete(); 
+        return redirect()->back()->with('success', 'Banner excluído!'); 
+    }
 }
