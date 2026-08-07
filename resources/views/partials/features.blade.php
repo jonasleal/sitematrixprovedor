@@ -1,5 +1,5 @@
 <section class="py-16 bg-black/40 border-y border-white/10 backdrop-blur-sm relative z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 select-none">
         
         <div class="text-center mb-12">
             <h2 class="text-3xl font-bold text-white mb-2">Por que escolher a <span class="text-glow text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-cyan-400">Matrix?</span></h2>

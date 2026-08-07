@@ -1,5 +1,5 @@
 <!-- Cabeçalho Fixo com Efeito Glass Original -->
-<header x-data="{ mobileMenuOpen: false }" class="glass fixed w-full top-0 z-50">
+<header x-data="{ mobileMenuOpen: false }" class="glass fixed w-full top-0 z-50 select-none">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
         
         <!-- Logo Matrix Original -->
@@ -62,7 +62,7 @@
         </div>
     </div>
 
-    <!-- Menu Mobile Retrátil (Com a estética Glass) -->
+   <!-- Menu Mobile Retrátil (Fundo Escuro Sólido para Legibilidade) -->
     <div x-show="mobileMenuOpen" 
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0 -translate-y-4"
@@ -70,7 +70,7 @@
          x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 -translate-y-4"
-         class="md:hidden absolute top-20 left-0 w-full glass border-b border-white/10 shadow-2xl"
+         class="md:hidden absolute top-20 left-0 w-full bg-[#0a0f1d] border-b border-white/10 shadow-2xl z-50"
          style="display: none;">
         
         <div class="px-4 pt-2 pb-6 space-y-2 flex flex-col">
@@ -83,7 +83,7 @@
                     <svg :class="{'rotate-180': mobileDropdownOpen}" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
                 <div x-show="mobileDropdownOpen" class="pl-8 pr-4 py-2 space-y-2 border-l-2 border-green-400/50 ml-4">
-                    <a href="/p/sobre" class="block py-2 text-sm font-semibold tracking-wide text-gray-400 hover:text-green-400 uppercase">NOSSA HISTÓRIA</a>
+                    <a href="/p/sobre-nos" class="block py-2 text-sm font-semibold tracking-wide text-gray-400 hover:text-green-400 uppercase">NOSSA HISTÓRIA</a>
                     <a href="/p/downloads" class="block py-2 text-sm font-semibold tracking-wide text-gray-400 hover:text-green-400 uppercase">DOWNLOADS</a>
                 </div>
             </div>
@@ -94,7 +94,7 @@
             <a href="/noticias" class="block px-4 py-3 rounded-lg text-sm font-semibold tracking-wide text-gray-300 hover:text-green-400 hover:bg-white/5 uppercase">NOTÍCIAS</a>
             
             <div class="pt-4 pb-2 px-4">
-                <a href="{{ $configGlobal->link_central_assinante ?? '#' }}" target="_blank" class="block w-full text-center border border-green-400 text-green-400 hover:bg-green-400 hover:text-gray-900 px-5 py-3 rounded-full font-bold transition duration-300 text-sm tracking-wide">
+                <a href="{{ $configGlobal->link_central_assinante ?? '#' }}" target="_blank" class="block w-full text-center border border-green-400 text-green-400 hover:bg-green-400 hover:text-gray-900 px-5 py-3 rounded-full font-bold transition duration-300 text-sm tracking-wide shadow-[0_0_10px_rgba(34,197,94,0.2)]">
                     CENTRAL DO CLIENTE
                 </a>
             </div>
