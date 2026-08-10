@@ -9,6 +9,7 @@ use App\Models\Campanha;
 use App\Models\PlanoDetalhe;
 use App\Models\Noticia;
 use App\Models\Banner;
+use App\Models\Tag;
 
 class HomeController extends Controller
 {
@@ -129,6 +130,32 @@ class HomeController extends Controller
             'banners' => $banners,    // <-- Enviando os Banners
             'noticias' => $noticias   // <-- Enviando as Notícias
         ]);
+    }
+
+    /**
+     * Exibe a listagem completa de notícias com filtro por Tag/Categoria.
+     */
+    public function noticias(Request $request)
+    {
+        // 1. Busca as Tags que estão associadas a pelo menos uma notícia
+        $tags = Tag::whereHas('noticias')->get();
+
+        // 2. Consulta base de notícias ativas
+        $query = Noticia::with('tag')
+                    ->where('ativo', true)
+                    ->orderBy('created_at', 'desc');
+
+        // 3. Aplica o filtro de tag se o parâmetro ?categoria=Nome estiver na URL
+        if ($request->filled('categoria')) {
+            $query->whereHas('tag', function($q) use ($request) {
+                $q->where('nome', $request->categoria);
+            });
+        }
+
+        // 4. Paginação (9 notícias por página)
+        $noticias = $query->paginate(9);
+
+        return view('noticias', compact('noticias', 'tags'));
     }
     
 	public function precadastro()

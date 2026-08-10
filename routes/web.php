@@ -40,14 +40,8 @@ Route::get('/sobre', function () {
 // Rota de Páginas Dinâmicas Institucionais
 Route::get('/p/{slug}', [PaginaController::class, 'showPublic'])->name('pagina.show');
 // Rota da Listagem de Notícias
-Route::get('/noticias', function () {
-    // Puxa as notícias ativas, da mais recente para a mais antiga, com paginação
-    $noticias = Noticia::where('ativo', true)
-            ->orderByRaw('COALESCE(publicado_em, created_at) DESC')
-            ->paginate(9);
-            
-    return view('noticias', compact('noticias'));
-});
+// Rota da Página de Notícias com Filtro
+Route::get('/noticias', [App\Http\Controllers\HomeController::class, 'noticias'])->name('noticias.index');
 
 // Rota de Leitura da Notícia Específica
 Route::get('/noticia/{slug}', function ($slug) {

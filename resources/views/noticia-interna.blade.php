@@ -1,5 +1,10 @@
 @extends('layouts.site')
 
+@section('title', $noticia->titulo)
+@section('meta_description', $noticia->resumo)
+@section('meta_image', asset('storage/' . $noticia->imagem_destaque))
+@section('og_type', 'article')
+
 @section('content')
 <main class="flex-grow pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
     

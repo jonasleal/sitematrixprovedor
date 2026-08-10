@@ -6,7 +6,27 @@
         <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-4 text-glow">Matrix Informa</h1>
         <p class="text-xl text-gray-300">Fique por dentro das novidades, expansões e comunicados oficiais.</p>
     </div>
+    <div class="flex flex-wrap justify-center gap-3 mb-10 select-none">
+    
+    <a href="{{ route('noticias.index') }}" 
+       class="px-5 py-2 rounded-full text-sm font-bold transition-all duration-300 border 
+       {{ !request('categoria') 
+            ? 'bg-gradient-to-r from-green-500 to-cyan-600 text-white border-transparent shadow-[0_0_15px_rgba(34,197,94,0.4)]' 
+            : 'bg-white/5 text-gray-300 border-white/10 hover:border-cyan-400 hover:text-cyan-400' }}">
+        Todas as Novidades
+    </a>
 
+    @foreach($tags as $tag)
+        <a href="{{ route('noticias.index', ['categoria' => $tag->nome]) }}" 
+           class="px-5 py-2 rounded-full text-sm font-bold transition-all duration-300 border 
+           {{ request('categoria') == $tag->nome 
+                ? 'bg-gradient-to-r from-green-500 to-cyan-600 text-white border-transparent shadow-[0_0_15px_rgba(34,197,94,0.4)]' 
+                : 'bg-white/5 text-gray-300 border-white/10 hover:border-cyan-400 hover:text-cyan-400' }}">
+            {{ $tag->nome }}
+        </a>
+    @endforeach
+
+    </div>
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         @forelse($noticias as $index => $noticia)
             @php
