@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Banner;
 use App\Models\Tag;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log; // Importante para gravar os erros
 
 class BannerController extends Controller
 {
@@ -33,31 +34,47 @@ class BannerController extends Controller
             'tema_cor'       => 'required|string',
         ], $this->mensagensErro);
 
-        $pathPC = $request->file('caminho_imagem')->store('banners', 'public');
-        $pathMobile = $request->hasFile('caminho_imagem_mobile') 
-            ? $request->file('caminho_imagem_mobile')->store('banners', 'public') 
-            : null;
+        $pathPC = null;
+        $pathMobile = null;
 
-        Banner::create([
-            'titulo'        => $request->titulo,
-            'tag_id'        => $request->tag_id,
-            'tema_cor'      => $request->tema_cor,
-            'descricao'     => $request->descricao,
-            'texto_botao'   => $request->texto_botao ?: 'Saiba Mais',
-            'link_destino'  => $request->link_destino,
-            'caminho_imagem'=> $pathPC,
-            'caminho_imagem_mobile' => $pathMobile,
-            'proporcao_imagem'=> $request->proporcao_imagem ?? '50',
-            'posicao_x'     => $request->posicao_x ?? 50,
-            'posicao_y'     => $request->posicao_y ?? 50,
-            'zoom'          => $request->zoom ?? 100,
-            'ativo'         => $request->has('ativo'),
-            'data_inicio'   => $request->data_inicio,
-            'data_fim'      => $request->data_fim,
-            'ordem'         => Banner::max('ordem') + 1,
-        ]);
+        try {
+            // 1. Tenta subir os arquivos PRIMEIRO
+            $pathPC = $request->file('caminho_imagem')->store('banners', 'public');
+            
+            if ($request->hasFile('caminho_imagem_mobile')) {
+                $pathMobile = $request->file('caminho_imagem_mobile')->store('banners', 'public');
+            }
 
-        return redirect()->back()->with('success', 'Banner criado com sucesso!');
+            // 2. Tenta salvar no Banco de Dados
+            Banner::create([
+                'titulo'        => $request->titulo,
+                'tag_id'        => $request->tag_id,
+                'tema_cor'      => $request->tema_cor,
+                'descricao'     => $request->descricao,
+                'texto_botao'   => $request->texto_botao ?: 'Saiba Mais',
+                'link_destino'  => $request->link_destino,
+                'caminho_imagem'=> $pathPC,
+                'caminho_imagem_mobile' => $pathMobile,
+                'proporcao_imagem'=> $request->proporcao_imagem ?? '50',
+                'posicao_x'     => $request->posicao_x ?? 50,
+                'posicao_y'     => $request->posicao_y ?? 50,
+                'zoom'          => $request->zoom ?? 100,
+                'ativo'         => $request->has('ativo'),
+                'data_inicio'   => $request->data_inicio,
+                'data_fim'      => $request->data_fim,
+                'ordem'         => (Banner::max('ordem') ?? 0) + 1,
+            ]);
+
+            return redirect()->back()->with('success', 'Banner criado com sucesso!');
+
+        } catch (\Exception $e) {
+            // 3. SE ALGO DEU ERRADO: Limpeza do lixo (arquivos órfãos)
+            if ($pathPC) Storage::disk('public')->delete($pathPC);
+            if ($pathMobile) Storage::disk('public')->delete($pathMobile);
+
+            Log::error('Erro ao salvar Banner: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Ocorreu um erro interno ao criar o banner. Tente novamente.');
+        }
     }
 
     public function update(Request $request, $id)
@@ -72,55 +89,101 @@ class BannerController extends Controller
             'tema_cor'       => 'required|string',
         ], $this->mensagensErro);
 
-        if ($request->hasFile('caminho_imagem')) {
-            if ($banner->caminho_imagem) Storage::disk('public')->delete($banner->caminho_imagem);
-            $banner->caminho_imagem = $request->file('caminho_imagem')->store('banners', 'public');
+        $novoPathPC = null;
+        $novoPathMobile = null;
+        $antigoPathPC = $banner->caminho_imagem;
+        $antigoPathMobile = $banner->caminho_imagem_mobile;
+
+        try {
+            // 1. Faz upload das novas imagens (se existirem), mas AINDA NÃO apaga as velhas
+            if ($request->hasFile('caminho_imagem')) {
+                $novoPathPC = $request->file('caminho_imagem')->store('banners', 'public');
+            }
+
+            if ($request->hasFile('caminho_imagem_mobile')) {
+                $novoPathMobile = $request->file('caminho_imagem_mobile')->store('banners', 'public');
+            }
+
+            // 2. Atualiza o Banco de Dados
+            $banner->update([
+                'titulo'        => $request->titulo,
+                'tag_id'        => $request->tag_id,
+                'tema_cor'      => $request->tema_cor,
+                'descricao'     => $request->descricao,
+                'texto_botao'   => $request->texto_botao,
+                'link_destino'  => $request->link_destino,
+                'caminho_imagem'=> $novoPathPC ?? $antigoPathPC,
+                'caminho_imagem_mobile' => $novoPathMobile ?? $antigoPathMobile,
+                'proporcao_imagem'=> $request->proporcao_imagem ?? '50',
+                'posicao_x'     => $request->posicao_x ?? 50,
+                'posicao_y'     => $request->posicao_y ?? 50,
+                'zoom'          => $request->zoom ?? 100,
+                'ativo'         => $request->has('ativo'),
+                'data_inicio'   => $request->data_inicio,
+                'data_fim'      => $request->data_fim,
+            ]);
+
+            // 3. Sucesso no BD? Agora sim apagamos as imagens velhas
+            if ($novoPathPC && $antigoPathPC) Storage::disk('public')->delete($antigoPathPC);
+            if ($novoPathMobile && $antigoPathMobile) Storage::disk('public')->delete($antigoPathMobile);
+
+            return redirect()->back()->with('success', 'Banner atualizado com sucesso!');
+
+        } catch (\Exception $e) {
+            // 4. Falhou no BD? Apaga as imagens NOVAS que acabaram de subir para não virarem lixo
+            if ($novoPathPC) Storage::disk('public')->delete($novoPathPC);
+            if ($novoPathMobile) Storage::disk('public')->delete($novoPathMobile);
+
+            Log::error('Erro ao atualizar Banner ID ' . $id . ': ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Ocorreu um erro interno ao atualizar o banner.');
         }
-
-        if ($request->hasFile('caminho_imagem_mobile')) {
-            if ($banner->caminho_imagem_mobile) Storage::disk('public')->delete($banner->caminho_imagem_mobile);
-            $banner->caminho_imagem_mobile = $request->file('caminho_imagem_mobile')->store('banners', 'public');
-        }
-
-        $banner->update([
-            'titulo'        => $request->titulo,
-            'tag_id'        => $request->tag_id,
-            'tema_cor'      => $request->tema_cor,
-            'descricao'     => $request->descricao,
-            'texto_botao'   => $request->texto_botao,
-            'link_destino'  => $request->link_destino,
-            'proporcao_imagem'=> $request->proporcao_imagem ?? '50',
-            'posicao_x'     => $request->posicao_x ?? 50,
-            'posicao_y'     => $request->posicao_y ?? 50,
-            'zoom'          => $request->zoom ?? 100,
-            'ativo'         => $request->has('ativo'),
-            'data_inicio'   => $request->data_inicio,
-            'data_fim'      => $request->data_fim,
-        ]);
-
-        return redirect()->back()->with('success', 'Banner atualizado com sucesso!');
     }
 
-    public function toggleStatus($id) { 
-        $banner = Banner::findOrFail($id); 
-        $banner->ativo = !$banner->ativo; 
-        $banner->save(); 
-        return redirect()->back()->with('success', 'Status do banner alterado!'); 
+    public function toggleStatus($id) 
+    { 
+        try {
+            $banner = Banner::findOrFail($id); 
+            $banner->ativo = !$banner->ativo; 
+            $banner->save(); 
+            return redirect()->back()->with('success', 'Status do banner alterado!'); 
+        } catch (\Exception $e) {
+            Log::error('Erro ao alterar status do Banner: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Não foi possível alterar o status.'); 
+        }
     }
     
-    public function reordenar(Request $request) { 
-        $ordem = $request->input('ordem', []); 
-        foreach ($ordem as $item) { 
-            Banner::where('id', $item['id'])->update(['ordem' => $item['ordem']]); 
-        } 
-        return response()->json(['status' => 'success']); 
+    public function reordenar(Request $request) 
+    { 
+        try {
+            $ordem = $request->input('ordem', []); 
+            foreach ($ordem as $item) { 
+                Banner::where('id', $item['id'])->update(['ordem' => $item['ordem']]); 
+            } 
+            return response()->json(['status' => 'success']); 
+        } catch (\Exception $e) {
+            Log::error('Erro ao reordenar Banners: ' . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => 'Falha ao reordenar'], 500); 
+        }
     }
     
-    public function destroy($id) { 
-        $banner = Banner::findOrFail($id); 
-        if ($banner->caminho_imagem) Storage::disk('public')->delete($banner->caminho_imagem); 
-        if ($banner->caminho_imagem_mobile) Storage::disk('public')->delete($banner->caminho_imagem_mobile); 
-        $banner->delete(); 
-        return redirect()->back()->with('success', 'Banner excluído!'); 
+    public function destroy($id) 
+    { 
+        try {
+            $banner = Banner::findOrFail($id); 
+            $pathPC = $banner->caminho_imagem;
+            $pathMobile = $banner->caminho_imagem_mobile;
+
+            // Apaga do BD primeiro
+            $banner->delete(); 
+
+            // Se apagou do BD com sucesso, remove os arquivos físicos
+            if ($pathPC) Storage::disk('public')->delete($pathPC); 
+            if ($pathMobile) Storage::disk('public')->delete($pathMobile); 
+
+            return redirect()->back()->with('success', 'Banner excluído!'); 
+        } catch (\Exception $e) {
+            Log::error('Erro ao excluir Banner: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Não foi possível excluir o banner.'); 
+        }
     }
 }

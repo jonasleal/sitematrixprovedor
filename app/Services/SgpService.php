@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Client\RequestException;
 
 class SgpService
 {
@@ -15,31 +16,36 @@ class SgpService
     {
         $this->url = rtrim(env('SGP_API_URL'), '/');
         $this->app = env('SGP_APP_NAME');
-        $this->token =env('SGP_TOKEN');
+        $this->token = env('SGP_TOKEN');
     }
 
     public function getPlanos()
     {
         try {
-            // 1. CHEFE (URA - GET): Puxa o JSON exato que você me enviou
-            $responseUra = Http::get($this->url . '/api/ura/consultaplano/', [
+            // 1. Puxa o JSON com Timeout de 10 segundos para não travar o site
+            $responseUra = Http::timeout(10)->get($this->url . '/api/ura/consultaplano/', [
                 'app' => $this->app,
                 'token' => $this->token,
             ]);
-            // Acessa a chave "planos" conforme seu JSON da URA
-            $planosUra = $responseUra->successful() ? ($responseUra->json()['planos'] ?? []) : [];
 
-            // 2. AUXILIAR (Pré-cadastro - POST): Puxa o array direto
-            $responsePre = Http::asForm()->post($this->url . '/api/precadastro/plano/list/', [
+            // Se o SGP retornar erro 400, 401, 404, 500, força a cair direto no CATCH
+            $responseUra->throw();
+
+            // Acessa a chave "planos"
+            $planosUra = $responseUra->json()['planos'] ?? [];
+
+            // 2. AUXILIAR (Pré-cadastro - POST): Puxa o array direto com Timeout
+            $responsePre = Http::timeout(10)->asForm()->post($this->url . '/api/precadastro/plano/list/', [
                 'app' => $this->app,
                 'token' => $this->token,
             ]);
             
-            // O seu JSON provou que o retorno já é o array direto, sem envolver em outras chaves
-            $planosPre = $responsePre->successful() ? $responsePre->json() : [];
-
-            if (!$responsePre->successful()) {
-                Log::warning("SgpService: Pré-cadastro falhou com status " . $responsePre->status());
+            $planosPre = [];
+            if ($responsePre->successful()) {
+                $planosPre = $responsePre->json();
+            } else {
+                // Falha silenciosa aceitável: Se o auxiliar falhar, avisamos no log, mas o site não cai.
+                Log::warning("SgpService: API de Pré-cadastro falhou com status " . $responsePre->status());
             }
 
             // 3. Indexa o Auxiliar pelo "id" para cruzamento rápido
@@ -62,7 +68,7 @@ class SgpService
 
                 $planosMesclados[] = [
                     'id'         => $id,
-                    'nome'       => $u['descricao'] ?? 'Plano Matrix',       // Chave exata da URA: "descricao" (Ex: 350Mbs_Promocao)
+                    'nome'       => $u['descricao'] ?? 'Plano Matrix',       // Chave exata da URA: "descricao" 
                     'valor'      => $u['preco'] ?? 0,                        // Chave exata da URA: "preco"
                     'download'   => $u['download'] ?? null,                  // Chave exata da URA: "download"
                     'upload'     => $u['upload'] ?? null,                    // Chave exata da URA: "upload"
@@ -74,9 +80,14 @@ class SgpService
 
             return $planosMesclados;
 
+        } catch (RequestException $e) {
+            // Captura erros específicos de lentidão (Timeout) ou Servidor Fora do Ar
+            Log::error("SgpService Falha de Conexão (RequestException): " . $e->getMessage());
+            return null; // Retorna NULL para ativar o sistema de Cache local do Laravel
         } catch (\Exception $e) {
-            Log::error("SgpService Falha no Motor Duplo: " . $e->getMessage());
-            return [];
+            // Captura erros na montagem do JSON ou outras quebras internas
+            Log::critical("SgpService Falha Grave no Motor Duplo: " . $e->getMessage());
+            return null; // Retorna NULL para ativar o sistema de Cache local do Laravel
         }
     }
 }

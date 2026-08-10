@@ -17,7 +17,7 @@
 
             <form action="{{ route('admin.configuracoes.store') }}" method="POST" class="space-y-6">
                 @csrf
-
+                
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-200 dark:border-gray-700">
                     <div class="p-6">
                         <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Contatos e Suporte</h3>
