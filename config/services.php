@@ -34,5 +34,16 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    /*
+    |--------------------------------------------------------------------------
+    | SGP Integração
+    |--------------------------------------------------------------------------
+    | Mapeamento correto das variáveis do .env para o sistema.
+    */
+    'sgp' => [
+        'url'   => env('SGP_API_URL'),
+        'token' => env('SGP_TOKEN'),
+        'app'   => env('SGP_APP_NAME'),
+    ],
 
 ];

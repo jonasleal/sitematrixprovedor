@@ -14,9 +14,9 @@ class SgpService
 
     public function __construct()
     {
-        $this->url = rtrim(env('SGP_API_URL'), '/');
-        $this->app = env('SGP_APP_NAME');
-        $this->token = env('SGP_TOKEN');
+        $this->url = rtrim(config('services.sgp.url'), '/');
+        $this->app = config('services.sgp.app');
+        $this->token = config('services.sgp.token');
     }
 
     public function getPlanos()
