@@ -135,6 +135,22 @@
                                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Selecione o PDF do contrato (cadastrado em Downloads) que o cliente precisará aceitar no pré-cadastro.</p>
                                 </div>
                             </div>
+                            <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+                                <h4 class="text-md font-bold text-gray-900 dark:text-white mb-4">Marketing e Analytics</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">ID Google Analytics 4 (GA4)</label>
+                                        <input type="text" name="google_analytics_id" value="{{ old('google_analytics_id', $config->google_analytics_id) }}" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Ex: G-XXXXXXXXXX">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">ID do Meta Pixel</label>
+                                        <input type="text" name="meta_pixel_id" value="{{ old('meta_pixel_id', $config->meta_pixel_id) }}" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="Ex: 123456789012345">
+                                    </div>
+
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

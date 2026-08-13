@@ -41,7 +41,7 @@ class ConfiguracaoController extends Controller
         $config->save();
 
         // Apaga o cache antigo para o site atualizar na mesma hora
-        Cache::forget('configuracoes_globais');
+        Cache::forget('config_site_array_v1');
 
         return redirect()->back()->with('success', 'Configurações globais salvas com sucesso!');
     }

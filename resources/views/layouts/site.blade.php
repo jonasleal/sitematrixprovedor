@@ -26,7 +26,38 @@
     <link rel="icon" href="/assets/favicon.png" type="image/png">
     
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
+    @php
+        $configSite = Cache::remember('config_site_array_v1', 86400, function () {
+            $config = \App\Models\Configuracao::first();
+            return $config ? $config->toArray() : [];
+        });
+    @endphp
+
+    @if(!empty($configSite['google_analytics_id']))
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ $configSite['google_analytics_id'] }}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '{{ $configSite['google_analytics_id'] }}');
+        </script>
+    @endif
+
+    @if(!empty($configSite['meta_pixel_id']))
+        <script>
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '{{ $configSite['meta_pixel_id'] }}');
+            fbq('track', 'PageView');
+        </script>
+        <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id={{ $configSite['meta_pixel_id'] }}&ev=PageView&noscript=1"/></noscript>
+    @endif
     <script src="/assets/tailwind.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
