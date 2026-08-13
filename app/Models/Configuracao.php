@@ -10,4 +10,9 @@ class Configuracao extends Model
     use HasFactory;
     protected $table = 'configuracoes';
     protected $guarded = []; // Libera a edição de todos os campos
+    
+    public function contrato()
+    {
+        return $this->belongsTo(Download::class, 'contrato_download_id');
+    }
 }

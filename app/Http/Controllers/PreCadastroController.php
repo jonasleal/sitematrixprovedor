@@ -19,8 +19,8 @@ class PreCadastroController extends Controller
             'max'      => 'O valor digitado é muito longo.',
         ];
 
-        // 2. VALIDAÇÃO DO FORMULÁRIO
-        $validator = Validator::make($request->all(), [
+        // 2. REGRAS DE VALIDAÇÃO DINÂMICAS
+        $regras = [
             'nome'       => 'required|string|max:255',
             'cpfcnpj'    => 'required|string',
             'celular'    => 'required|string',
@@ -32,7 +32,14 @@ class PreCadastroController extends Controller
             'cep'        => 'required|string',
             'uf'         => 'required|string|max:2',
             'plano_id'   => 'required',
-        ], $mensagens);
+        ];
+
+        $config = \App\Models\Configuracao::first();
+        if ($config && $config->contrato_download_id) {
+            $regras['aceite_contrato'] = 'required|accepted';
+        }
+
+        $validator = Validator::make($request->all(), $regras, $mensagens);
 
         if ($validator->fails()) {
             return response()->json([

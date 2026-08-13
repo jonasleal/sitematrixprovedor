@@ -118,9 +118,29 @@
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Texto "Sobre Nós" (História da Empresa)</label>
                                 <textarea name="texto_sobre_nos" rows="6" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm sm:text-sm">{{ old('texto_sobre_nos', $config->texto_sobre_nos) }}</textarea>
                             </div>
+                            <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+                                <h4 class="text-md font-bold text-gray-900 dark:text-white mb-4">Documentos Legais (Pré-cadastro)</h4>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Contrato Padrão do Assinante</label>
+                                    <select name="contrato_download_id" class="mt-1 block w-full md:w-1/2 rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                                        <option value="">Nenhum contrato obrigatório</option>
+                                        @if(isset($downloads))
+                                            @foreach($downloads as $download)
+                                                <option value="{{ $download->id }}" {{ old('contrato_download_id', $config->contrato_download_id) == $download->id ? 'selected' : '' }}>
+                                                    {{ $download->titulo }}
+                                                </option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Selecione o PDF do contrato (cadastrado em Downloads) que o cliente precisará aceitar no pré-cadastro.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                
+                
 
                 <div class="flex justify-end">
                     <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-md shadow-md transition duration-200">

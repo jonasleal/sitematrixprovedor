@@ -160,11 +160,13 @@ class HomeController extends Controller
     
 	public function precadastro()
     {
-        // TRUQUE DE MESTRE: Rodamos a mesma lógica da Home e pegamos os planos já processados
+        // Rodamos a mesma lógica da Home e pegamos os planos já processados
         // Isso garante que os Descontos, Nomes Personalizados e Ordenações sejam IDÊNTICOS!
         $dadosDaHome = $this->index()->getData();
         $planos = $dadosDaHome['planos'];
+        // Pega a configuração global com o contrato anexado
+        $config = \App\Models\Configuracao::with('contrato')->first();
 
-        return view('precadastro', compact('planos'));
+        return view('precadastro', compact('planos', 'config'));
     }
 }

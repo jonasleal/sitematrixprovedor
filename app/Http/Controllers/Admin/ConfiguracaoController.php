@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Configuracao;
+use App\Models\Download;
 use Illuminate\Support\Facades\Cache;
 
 class ConfiguracaoController extends Controller
@@ -13,7 +14,11 @@ class ConfiguracaoController extends Controller
     {
         // Pega a primeira configuração ou cria uma em branco se não existir
         $config = Configuracao::first() ?? new Configuracao();
-        return view('admin.configuracoes.index', compact('config'));
+
+        // Busca todos os downloads/PDFs ativos cadastrados no sistema
+        $downloads = Download::where('ativo', true)->orderBy('titulo', 'asc')->get();
+
+        return view('admin.configuracoes.index', compact('config', 'downloads'));
     }
 
     public function store(Request $request)
@@ -23,8 +28,16 @@ class ConfiguracaoController extends Controller
             $config = new Configuracao();
         }
 
-        // Salva tudo que vier do formulário
-        $config->fill($request->all());
+        $dados = $request->all();
+
+        // Garantia de integridade: Se o select do contrato for enviado em branco (""),
+        // converte para null para não violar a FK (Foreign Key) do banco de dados.
+        if (array_key_exists('contrato_download_id', $dados) && empty($dados['contrato_download_id'])) {
+            $dados['contrato_download_id'] = null;
+        }
+
+        // Salva tudo que veio do formulário
+        $config->fill($dados);
         $config->save();
 
         // Apaga o cache antigo para o site atualizar na mesma hora

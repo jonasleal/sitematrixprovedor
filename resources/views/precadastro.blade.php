@@ -132,6 +132,23 @@
                 </div>
             </div>
 
+            @if(isset($config) && $config->contrato)
+                @php
+                    $linkContrato = $config->contrato->tipo_link === 'upload' 
+                        ? asset('storage/' . $config->contrato->arquivo_path) 
+                        : $config->contrato->arquivo_path;
+                @endphp
+                <div class="bg-black/30 p-5 rounded-xl border border-gray-700 mt-6 mb-6">
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" id="aceite_contrato" name="aceite_contrato" required class="w-6 h-6 rounded border-gray-600 bg-black/50 text-green-500 focus:ring-green-500 focus:ring-offset-gray-900 transition duration-200">
+                        <span class="text-sm text-gray-300">
+                            Eu declaro que li e estou de acordo com os 
+                            <a href="{{ $linkContrato }}" target="_blank" class="text-green-400 font-bold hover:underline">Termos do Contrato de Prestação de Serviços</a>.
+                        </span>
+                    </label>
+                </div>
+            @endif
+
             <button type="submit" id="btn-submit" class="w-full btn-accent text-white py-4 rounded-xl font-bold text-xl hover:shadow-[0_0_25px_rgba(129,199,0,0.6)] transition duration-300">
                 Concluir Pré-Cadastro
             </button>
@@ -174,7 +191,7 @@
                 
                 <h3 class="text-2xl font-bold text-white mb-2">Instabilidade na Conexão</h3>
                 <p class="text-gray-300 mb-6">
-                    Estávamos quase lá! Nosso sistema principal está passando por uma lentidão temporária. Não se preocupe, envie seus dados pelo WhatsApp para garantirmos sua instalação:
+                    Estávamos quase lá! Nosso sistema principal está passando por uma instabilidade temporária. Não se preocupe, envie seus dados pelo WhatsApp para continuarmos o seu cadastro:
                 </p>
                 
                 <a href="#" id="btn-whatsapp-fallback" target="_blank" onclick="fecharModalFalha()" class="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-black py-4 rounded-xl font-bold text-lg hover:shadow-[0_0_20px_rgba(34,197,94,0.5)] transition duration-300">
@@ -408,6 +425,14 @@
                 temErroFront = true;
             }
 
+            // Validação do Contrato
+            const aceiteCheckbox = document.getElementById('aceite_contrato');
+            if (aceiteCheckbox && !aceiteCheckbox.checked) {
+                mostrarErroVisual('aceite_contrato', 'Você precisa ler e aceitar o contrato para prosseguir.');
+                temErroFront = true;
+                if(!primeiroCampoErro) primeiroCampoErro = aceiteCheckbox;
+            }
+
             if (temErroFront) {
                 primeiroCampoErro.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return; 
@@ -430,7 +455,8 @@
                 cidade: document.getElementById('cidade').value,
                 cep: document.getElementById('cep').value.replace(/\D/g, ''),
                 uf: document.getElementById('uf').value,
-                plano_id: planoSelecionado.value
+                plano_id: planoSelecionado.value,
+                aceite_contrato: aceiteCheckbox ? (aceiteCheckbox.checked ? 1 : 0) : null
             };
 
             const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
