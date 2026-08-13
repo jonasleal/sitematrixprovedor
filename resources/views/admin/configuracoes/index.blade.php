@@ -165,6 +165,32 @@
                 </div>
 
             </form>
+            <div class="mt-8 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg border border-gray-200 dark:border-gray-700">
+                <div class="p-6">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                        <i class="fas fa-cloud-upload-alt mr-2 text-indigo-500"></i> Backup e Segurança
+                    </h3>
+                    <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                        O sistema já realiza backups automáticos todos os dias de madrugada. No entanto, você pode forçar a geração de um backup de segurança agora mesmo e enviá-lo diretamente para o seu Google Drive.
+                    </p>
+                    
+                    <form action="{{ route('admin.backup.run') }}" method="POST" onsubmit="document.getElementById('btn-backup').disabled = true; document.getElementById('btn-backup').innerHTML = '<i class=\'fas fa-spinner fa-spin mr-2\'></i> Gerando e Enviando... Aguarde (Isso pode levar alguns minutos)'; document.getElementById('btn-backup').classList.add('opacity-75', 'cursor-not-allowed');">
+                        @csrf
+                        <button type="submit" id="btn-backup" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                            <i class="fas fa-shield-alt mr-2"></i> Gerar Backup Manual Agora
+                        </button>
+                    </form>
+                </div>
+                @if(session('console_log_error'))
+                    <script>
+                        document.addEventListener("DOMContentLoaded", function() {
+                            console.group("⚠️ Log de Falha do Backup Automático");
+                            console.error({!! json_encode(session('console_log_error')) !!});
+                            console.groupEnd();
+                        });
+                    </script>
+                @endif
+            </div>
         </div>
     </div>
 </x-app-layout>

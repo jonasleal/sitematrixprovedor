@@ -93,6 +93,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 	// 5. Configurações Globais
     Route::get('/admin/configuracoes', [\App\Http\Controllers\Admin\ConfiguracaoController::class, 'index'])->name('admin.configuracoes.index');
     Route::post('/admin/configuracoes', [\App\Http\Controllers\Admin\ConfiguracaoController::class, 'store'])->name('admin.configuracoes.store');
+    Route::post('/admin/backup/run', [\App\Http\Controllers\Admin\ConfiguracaoController::class, 'runBackup'])->name('admin.backup.run');
 	// 6. Banners
     Route::get('/admin/banners', [\App\Http\Controllers\Admin\BannerController::class, 'index'])->name('admin.banners.index');
     Route::post('/admin/banners', [\App\Http\Controllers\Admin\BannerController::class, 'store'])->name('admin.banners.store');
