@@ -63,6 +63,7 @@
     
     <link rel="stylesheet" href="/assets/base.css?v=1.3">
     <link rel="stylesheet" href="/assets/site.css?v=1.3">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-900 text-white hero-bg min-h-screen flex flex-col">
     

@@ -12,7 +12,7 @@
             <div class="w-24 h-1 bg-gradient-to-r from-green-400 to-cyan-500 mx-auto rounded-full mt-6"></div>
         </div>
 
-        @if($downloads->isEmpty())
+        @if(count($downloads) === 0)
             <div class="glass p-8 text-center rounded-2xl max-w-lg mx-auto">
                 <p class="text-gray-300">Nenhum ficheiro disponível para download de momento.</p>
             </div>
@@ -38,16 +38,16 @@
 
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             @foreach($itens as $item)
-                                <div class="glass p-6 rounded-2xl border border-white/10 hover:border-green-400/50 transition-all duration-300 flex flex-col sm:flex-row gap-6">
+                                <div class="glass p-6 rounded-2xl border border-white/10 hover:border-green-400/50 transition-all duration-300 flex flex-col h-full">
                                     
-                                    @if($item->imagem_path)
-                                        <div class="shrink-0 mx-auto sm:mx-0">
-                                            <img src="{{ asset('storage/' . $item->imagem_path) }}" alt="{{ $item->titulo }}" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-2xl shadow-[0_0_15px_rgba(34,197,94,0.2)] border border-white/10 bg-white/5">
-                                        </div>
-                                    @endif
+                                    <div class="flex flex-col sm:flex-row gap-6 mb-6">
+                                        @if($item->imagem_path)
+                                            <div class="shrink-0 mx-auto sm:mx-0">
+                                                <img src="{{ asset('storage/' . $item->imagem_path) }}" alt="{{ $item->titulo }}" class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-2xl shadow-[0_0_15px_rgba(34,197,94,0.2)] border border-white/10 bg-white/5">
+                                            </div>
+                                        @endif
 
-                                    <div class="flex flex-col flex-grow">
-                                        <div class="mb-4 text-center sm:text-left">
+                                        <div class="flex flex-col flex-grow text-center sm:text-left justify-center">
                                             <div class="flex flex-col sm:flex-row justify-between items-center sm:items-start mb-2 gap-2">
                                                 <h3 class="text-xl font-bold text-white leading-tight">{{ $item->titulo }}</h3>
                                                 @if($item->versao)
@@ -60,17 +60,81 @@
                                                 <p class="text-gray-300 text-sm leading-relaxed">{{ $item->descricao }}</p>
                                             @endif
                                         </div>
+                                    </div>
 
-                                        <div class="pt-4 mt-auto border-t border-white/5">
-                                            @php
-                                                $url = $item->tipo_link === 'upload' ? asset('storage/' . $item->arquivo_path) : $item->arquivo_path;
-                                            @endphp
-                                            <a href="{{ $url }}" target="_blank" class="inline-flex items-center justify-center w-full px-5 py-3 text-sm font-bold text-white bg-gradient-to-r from-green-500 to-cyan-600 rounded-xl hover:shadow-[0_0_20px_rgba(34,197,94,0.4)] transition-all duration-300 hover:-translate-y-1">
-                                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                                Baixar Ficheiro
-                                            </a>
+                                    <div class="pt-5 mt-auto border-t border-white/10 w-full">
+                                        <div class="flex flex-wrap gap-3 w-full">
+                                            @if($item->links->isNotEmpty())
+                                                @foreach($item->links as $link)
+                                                    @php
+                                                        $url = filter_var($link->link, FILTER_VALIDATE_URL) 
+                                                                ? $link->link 
+                                                                : asset('storage/' . $link->link);
+                                                        
+                                                        $icone = 'fas fa-download';
+                                                        $corClass = 'bg-white/10 hover:bg-white/20 border-white/20 text-white';
+                                                        $texto = 'Baixar';
+
+                                                        switch($link->plataforma) {
+                                                            case 'android':
+                                                                $icone = 'fab fa-android';
+                                                                $corClass = 'bg-[#3DDC84]/10 hover:bg-[#3DDC84]/20 border-[#3DDC84]/30 text-[#3DDC84]';
+                                                                $texto = 'Android';
+                                                                break;
+                                                            case 'ios':
+                                                                $icone = 'fab fa-apple';
+                                                                $corClass = 'bg-gray-100/10 hover:bg-gray-100/20 border-gray-100/30 text-white';
+                                                                $texto = 'iOS / Apple';
+                                                                break;
+                                                            case 'windows':
+                                                                $icone = 'fab fa-windows';
+                                                                $corClass = 'bg-[#0078D7]/10 hover:bg-[#0078D7]/20 border-[#0078D7]/30 text-[#0078D7]';
+                                                                $texto = 'Windows';
+                                                                break;
+                                                            case 'webos':
+                                                                $icone = 'fas fa-tv';
+                                                                $corClass = 'bg-[#E60049]/10 hover:bg-[#E60049]/20 border-[#E60049]/30 text-[#E60049]';
+                                                                $texto = 'LG WebOS';
+                                                                break;
+                                                            case 'tizen':
+                                                                $icone = 'fas fa-tv';
+                                                                $corClass = 'bg-[#1428A0]/10 hover:bg-[#1428A0]/20 border-[#1428A0]/30 text-[#4C6BFF]';
+                                                                $texto = 'Samsung Tizen';
+                                                                break;
+                                                            case 'pdf':
+                                                                $icone = 'fas fa-file-pdf';
+                                                                $corClass = 'bg-red-500/10 hover:bg-red-500/20 border-red-500/30 text-red-400';
+                                                                $texto = 'Documento PDF';
+                                                                break;
+                                                            case 'web':
+                                                                $icone = 'fas fa-globe';
+                                                                $corClass = 'bg-cyan-500/10 hover:bg-cyan-500/20 border-cyan-500/30 text-cyan-400';
+                                                                $texto = 'Acesso Web';
+                                                                break;
+                                                        }
+                                                    @endphp
+                                                    
+                                                    <a href="{{ $url }}" target="_blank" class="flex-1 min-w-[130px] inline-flex items-center justify-center px-4 py-2.5 border rounded-xl transition-all duration-300 shadow-sm hover:shadow-md font-medium text-sm {{ $corClass }} hover:-translate-y-0.5">
+                                                        <i class="{{ $icone }} text-lg mr-2"></i>
+                                                        <span>{{ $texto }}</span>
+                                                    </a>
+                                                @endforeach
+                                            @elseif(!empty($item->arquivo_path))
+                                                @php
+                                                    $urlAntiga = filter_var($item->arquivo_path, FILTER_VALIDATE_URL) 
+                                                                    ? $item->arquivo_path 
+                                                                    : asset('storage/' . $item->arquivo_path);
+                                                @endphp
+                                                <a href="{{ $urlAntiga }}" target="_blank" class="flex-1 inline-flex items-center justify-center px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-green-500 to-cyan-600 rounded-xl hover:shadow-[0_0_15px_rgba(34,197,94,0.4)] transition-all duration-300 hover:-translate-y-0.5">
+                                                    <i class="fas fa-download mr-2"></i>
+                                                    <span>Baixar Ficheiro</span>
+                                                </a>
+                                            @else
+                                                <span class="text-sm text-gray-500 italic w-full text-center">Links de download indisponíveis de momento.</span>
+                                            @endif
                                         </div>
                                     </div>
+
                                 </div>
                             @endforeach
                         </div>

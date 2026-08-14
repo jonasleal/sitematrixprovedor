@@ -6,6 +6,7 @@ use App\Models\Download;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log; // Importante para registro de erros
+use App\Services\ImageUploadService;
 
 class DownloadController extends Controller
 {
@@ -33,56 +34,69 @@ class DownloadController extends Controller
         $request->validate([
             'titulo' => 'required|string|max:255',
             'categoria' => 'required|string',
-            'imagem' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:2048', // Validação da Miniatura
-            'tipo_link' => 'required|in:upload,externo',
-            'arquivo' => 'nullable|file|mimes:pdf,apk,zip,rar,doc,docx|max:51200', // Limite de 50MB
-            'link_externo' => 'nullable|url',
+            'imagem' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:2048',
+            'descricao' => 'nullable|string',
             'versao' => 'nullable|string|max:50',
             'ordem' => 'nullable|integer',
+            // Validação dos Links Dinâmicos
+            'links.*.plataforma' => 'required|string',
+            'links.*.tipo_link' => 'required|in:upload,externo',
+            'links.*.arquivo' => 'nullable|file|mimes:pdf,apk,zip,rar,doc,docx|max:51200',
+            'links.*.link_externo' => 'nullable|url',
         ]);
 
-        $path = null;
         $imagemPath = null;
 
         try {
-            // 1. Upload dos Arquivos PRIMEIRO
-            if ($request->tipo_link === 'upload' && $request->hasFile('arquivo')) {
-                $path = $request->file('arquivo')->store('downloads/arquivos', 'public');
-            } elseif ($request->tipo_link === 'externo') {
-                $path = $request->link_externo;
-            }
-
-            // Upload da Miniatura
+            // 1. Upload da Miniatura (Capa do App)
             if ($request->hasFile('imagem')) {
-                $imagemPath = $request->file('imagem')->store('downloads/miniaturas', 'public');
+                $imagemPath = ImageUploadService::uploadAndOptimize($request->file('imagem'), 'downloads/miniaturas', 85);
             }
 
-            // 2. Tenta Salvar no Banco de Dados
-            Download::create([
+            // 2. Salva o App "Pai"
+            $download = Download::create([
                 'titulo' => $request->titulo,
                 'descricao' => $request->descricao,
                 'categoria' => $request->categoria,
                 'imagem_path' => $imagemPath, 
-                'tipo_link' => $request->tipo_link,
-                'arquivo_path' => $path,
                 'versao' => $request->versao,
                 'ordem' => $request->ordem ?? 0,
                 'ativo' => $request->has('ativo'),
             ]);
 
+            // 3. Salva os Links (Filhos)
+            if ($request->has('links')) {
+                foreach ($request->links as $index => $linkData) {
+                    $linkPath = null;
+
+                    // Se for Upload de Arquivo
+                    if ($linkData['tipo_link'] === 'upload' && $request->hasFile("links.{$index}.arquivo")) {
+                        $linkPath = $request->file("links.{$index}.arquivo")->store('downloads/arquivos', 'public');
+                    } 
+                    // Se for Link Externo
+                    elseif ($linkData['tipo_link'] === 'externo' && !empty($linkData['link_externo'])) {
+                        $linkPath = $linkData['link_externo'];
+                    }
+
+                    // Só salva no banco se houver um caminho válido
+                    if ($linkPath) {
+                        $download->links()->create([
+                            'plataforma' => $linkData['plataforma'],
+                            'link' => $linkPath,
+                        ]);
+                    }
+                }
+            }
+
             return redirect()->route('admin.downloads.index')->with('success', 'Download adicionado com sucesso!');
 
         } catch (\Exception $e) {
-            // 3. SE FALHAR O BANCO: Apaga os arquivos que acabaram de subir para não virar lixo
-            if ($path && $request->tipo_link === 'upload' && Storage::disk('public')->exists($path)) {
-                Storage::disk('public')->delete($path);
-            }
+            // Em caso de erro grave, limpa a miniatura
             if ($imagemPath && Storage::disk('public')->exists($imagemPath)) {
                 Storage::disk('public')->delete($imagemPath);
             }
-
-            Log::error('Erro ao criar Download: ' . $e->getMessage());
-            return back()->withInput()->with('error', 'Erro interno ao salvar o download. Verifique se o arquivo não ultrapassa 50MB.');
+            Log::error('Erro ao criar Download Multi-plataforma: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Erro interno ao salvar. Verifique se os arquivos não ultrapassam o limite.');
         }
     }
 
@@ -90,7 +104,8 @@ class DownloadController extends Controller
     public function edit($id)
     {
         try {
-            $download = Download::findOrFail($id);
+            // Carrega o App e já traz os links anexados a ele
+            $download = Download::with('links')->findOrFail($id);
             return view('admin.downloads.edit', compact('download'));
         } catch (\Exception $e) {
             Log::error("Erro ao tentar editar o Download ID {$id}: " . $e->getMessage());
@@ -107,65 +122,110 @@ class DownloadController extends Controller
             'titulo' => 'required|string|max:255',
             'categoria' => 'required|string',
             'imagem' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:2048',
-            'tipo_link' => 'required|in:upload,externo',
-            'arquivo' => 'nullable|file|mimes:pdf,apk,zip,rar,doc,docx|max:51200',
-            'link_externo' => 'nullable|url',
+            'descricao' => 'nullable|string',
             'versao' => 'nullable|string|max:50',
             'ordem' => 'nullable|integer',
+            // Validação dos Links
+            'links.*.id' => 'nullable|integer|exists:download_links,id',
+            'links.*.plataforma' => 'required|string',
+            'links.*.tipo_link' => 'required|in:upload,externo',
+            'links.*.arquivo' => 'nullable|file|mimes:pdf,apk,zip,rar,doc,docx|max:51200',
+            'links.*.link_externo' => 'nullable|url',
         ]);
 
-        $novoPath = null;
         $novaImagemPath = null;
-        
-        $antigoPath = $download->arquivo_path;
         $antigaImagemPath = $download->imagem_path;
 
         try {
-            // 1. Faz o upload dos NOVOS arquivos (se houverem), sem apagar os velhos ainda
-            if ($request->tipo_link === 'upload' && $request->hasFile('arquivo')) {
-                $novoPath = $request->file('arquivo')->store('downloads/arquivos', 'public');
-            } elseif ($request->tipo_link === 'externo' && $request->filled('link_externo')) {
-                $novoPath = $request->link_externo;
-            }
-
+            // 1. Atualiza Miniatura
             if ($request->hasFile('imagem')) {
-                $novaImagemPath = $request->file('imagem')->store('downloads/miniaturas', 'public');
+                $novaImagemPath = ImageUploadService::uploadAndOptimize($request->file('imagem'), 'downloads/miniaturas', 85);
             }
 
-            // 2. Atualiza o Banco de Dados
+            // 2. Atualiza o App Pai
             $download->update([
                 'titulo' => $request->titulo,
                 'descricao' => $request->descricao,
                 'categoria' => $request->categoria,
-                'imagem_path' => $novaImagemPath ?? $antigaImagemPath, // Mantém a antiga se não enviou nova
-                'tipo_link' => $request->tipo_link,
-                'arquivo_path' => $novoPath ?? $antigoPath,
+                'imagem_path' => $novaImagemPath ?? $antigaImagemPath,
                 'versao' => $request->versao,
                 'ordem' => $request->ordem ?? 0,
                 'ativo' => $request->has('ativo'),
             ]);
 
-            // 3. Sucesso no BD? Agora sim apagamos os arquivos físicos ANTIGOS
-            if ($novoPath && $download->getOriginal('tipo_link') === 'upload' && $antigoPath && Storage::disk('public')->exists($antigoPath)) {
-                Storage::disk('public')->delete($antigoPath);
-            }
+            // Se subiu foto nova, apaga a velha
             if ($novaImagemPath && $antigaImagemPath && Storage::disk('public')->exists($antigaImagemPath)) {
                 Storage::disk('public')->delete($antigaImagemPath);
+            }
+
+            // 3. Processamento Complexo: Sincronização de Links Filhos
+            $linksEnviadosIds = [];
+
+            if ($request->has('links')) {
+                foreach ($request->links as $index => $linkData) {
+                    $linkModel = null;
+                    $linkPath = null;
+
+                    // Se o link já existia, vamos atualizá-lo
+                    if (!empty($linkData['id'])) {
+                        $linkModel = $download->links()->find($linkData['id']);
+                        $linksEnviadosIds[] = $linkModel->id;
+                        $linkPath = $linkModel->link; // Mantém o antigo por padrão
+                    }
+
+                    // Se subiu um arquivo novo
+                    if ($linkData['tipo_link'] === 'upload' && $request->hasFile("links.{$index}.arquivo")) {
+                        $novoArquivo = $request->file("links.{$index}.arquivo")->store('downloads/arquivos', 'public');
+                        // Apaga o antigo se existia e era upload
+                        if ($linkModel && !filter_var($linkModel->link, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($linkModel->link)) {
+                            Storage::disk('public')->delete($linkModel->link);
+                        }
+                        $linkPath = $novoArquivo;
+                    } 
+                    // Se mudou para link externo
+                    elseif ($linkData['tipo_link'] === 'externo' && !empty($linkData['link_externo'])) {
+                        // Apaga o antigo se existia e era upload
+                        if ($linkModel && !filter_var($linkModel->link, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($linkModel->link)) {
+                            Storage::disk('public')->delete($linkModel->link);
+                        }
+                        $linkPath = $linkData['link_externo'];
+                    }
+
+                    // Salva ou Cria o Link
+                    if ($linkPath) {
+                        if ($linkModel) {
+                            $linkModel->update([
+                                'plataforma' => $linkData['plataforma'],
+                                'link' => $linkPath,
+                            ]);
+                        } else {
+                            $novoLink = $download->links()->create([
+                                'plataforma' => $linkData['plataforma'],
+                                'link' => $linkPath,
+                            ]);
+                            $linksEnviadosIds[] = $novoLink->id;
+                        }
+                    }
+                }
+            }
+
+            // 4. Excluir links removidos pelo usuário na tela
+            $linksParaApagar = $download->links()->whereNotIn('id', $linksEnviadosIds)->get();
+            foreach ($linksParaApagar as $l) {
+                if (!filter_var($l->link, FILTER_VALIDATE_URL) && Storage::disk('public')->exists($l->link)) {
+                    Storage::disk('public')->delete($l->link);
+                }
+                $l->delete();
             }
 
             return redirect()->route('admin.downloads.index')->with('success', 'Download atualizado com sucesso!');
 
         } catch (\Exception $e) {
-            // 4. Falha no BD? Apaga os arquivos NOVOS que acabaram de subir para não virar lixo
-            if ($novoPath && $request->tipo_link === 'upload' && Storage::disk('public')->exists($novoPath)) {
-                Storage::disk('public')->delete($novoPath);
-            }
             if ($novaImagemPath && Storage::disk('public')->exists($novaImagemPath)) {
                 Storage::disk('public')->delete($novaImagemPath);
             }
-
             Log::error('Erro ao atualizar Download ID ' . $id . ': ' . $e->getMessage());
-            return back()->withInput()->with('error', 'Ocorreu um erro interno ao atualizar. Verifique os limites de tamanho de arquivo.');
+            return back()->withInput()->with('error', 'Ocorreu um erro interno. Verifique os arquivos.');
         }
     }
 
@@ -202,7 +262,9 @@ class DownloadController extends Controller
     public function showPublic()
     {
         try {
-            $downloads = Download::where('ativo', true)
+            // Eager Loading: with('links') traz os botões anexados de uma só vez
+            $downloads = Download::with('links')
+                ->where('ativo', true)
                 ->orderBy('ordem', 'asc')
                 ->orderBy('created_at', 'desc')
                 ->get()
@@ -211,8 +273,8 @@ class DownloadController extends Controller
             return view('downloads', compact('downloads'));
         } catch (\Exception $e) {
             Log::error('Erro ao exibir Downloads Públicos: ' . $e->getMessage());
-            // Mostramos um array vazio para não quebrar o layout, mas não revelamos o erro 500
-            return view('downloads', ['downloads' => []]);
+            // Retornamos um collect() vazio em vez de um Array []
+            return view('downloads', ['downloads' => collect([])]);
         }
     }
 }

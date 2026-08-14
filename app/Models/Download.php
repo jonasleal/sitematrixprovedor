@@ -20,4 +20,12 @@ class Download extends Model
         'ordem',
         'ativo',
     ];
+
+    /**
+     * Retorna todos os links (plataformas) associados a este aplicativo.
+     */
+    public function links()
+    {
+        return $this->hasMany(DownloadLink::class);
+    }
 }
