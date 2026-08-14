@@ -131,6 +131,8 @@ CREATE TABLE `configuracoes` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `contrato_download_id` bigint(20) unsigned DEFAULT NULL,
+  `google_analytics_id` varchar(255) DEFAULT NULL,
+  `meta_pixel_id` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `configuracoes_contrato_download_id_foreign` (`contrato_download_id`),
   CONSTRAINT `configuracoes_contrato_download_id_foreign` FOREIGN KEY (`contrato_download_id`) REFERENCES `downloads` (`id`) ON DELETE SET NULL
@@ -417,3 +419,4 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (24,'2026_08_06_162
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (25,'2026_08_10_104727_add_contrato_download_id_to_configuracaos_table',16);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (26,'2026_08_10_133211_add_dados_precadastro_to_lead_coberturas_table',17);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (27,'2026_08_12_000000_consolidacao_matrix_provedor',18);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (28,'2026_08_13_012316_add_analytics_to_configuracoes_table',19);

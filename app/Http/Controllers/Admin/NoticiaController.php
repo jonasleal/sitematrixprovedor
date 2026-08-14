@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log; 
 use App\Models\Noticia;
 use App\Models\BannerTag;
+use App\Services\ImageUploadService;
 
 class NoticiaController extends Controller
 {
@@ -29,24 +30,22 @@ class NoticiaController extends Controller
 
     public function store(Request $request)
     {
-        // 1. Validação
         $request->validate([
             'titulo' => 'required|string|max:255|unique:noticias,titulo',
             'resumo' => 'required|string|max:500',
             'conteudo' => 'required|string',
             'tag_id' => 'nullable|exists:tags,id',
-            'imagem_destaque' => 'nullable|image|max:2048',
+            'imagem_destaque' => 'nullable|image|max:5120',
         ]);
 
         $path = null;
 
         try {
-            // 2. Upload da imagem (se houver)
+            // Converte a capa da notícia para WebP
             if ($request->hasFile('imagem_destaque')) {
-                $path = $request->file('imagem_destaque')->store('noticias', 'public');
+                $path = ImageUploadService::uploadAndOptimize($request->file('imagem_destaque'), 'noticias', 85);
             }
 
-            // 3. Gravação na base de dados
             Noticia::create([
                 'titulo' => $request->titulo,
                 'slug' => Str::slug($request->titulo),
@@ -59,7 +58,6 @@ class NoticiaController extends Controller
             return redirect()->back()->with('success', 'Notícia publicada com sucesso!');
 
         } catch (\Exception $e) {
-            // Se algo falhar no BD, remove a imagem que acabou de subir (Limpeza)
             if ($path && Storage::disk('public')->exists($path)) {
                 Storage::disk('public')->delete($path);
             }
@@ -98,21 +96,18 @@ class NoticiaController extends Controller
                 'file' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             ]);
 
-            $path = $request->file('file')->store('noticias/conteudo', 'public');
+            // MÁGICA: Até as imagens arrastadas para dentro do texto da notícia agora viram WebP
+            $path = ImageUploadService::uploadAndOptimize($request->file('file'), 'noticias/conteudo', 80);
 
-            // Retorna JSON no padrão que o TinyMCE espera para sucesso
             return response()->json([
                 'location' => asset('storage/' . $path)
             ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            // Falha de validação (ex: arquivo gigante ou formato inválido)
             return response()->json([
                 'error' => 'A imagem selecionada é muito pesada ou formato inválido.'
             ], 422);
-
         } catch (\Exception $e) {
-            // Falha grave (ex: disco cheio, sem permissões de pasta)
             Log::error('Erro grave de Upload TinyMCE: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Falha interna no servidor ao processar a imagem.'
@@ -142,11 +137,11 @@ class NoticiaController extends Controller
             'conteudo' => 'required|string',
             'tag_id' => 'nullable|exists:tags,id',
             'publicado_em' => 'nullable|date',
+            'imagem_destaque' => 'nullable|image|max:5120',
         ]);
 
         $data['ativo'] = $request->has('ativo');
         
-        // Atualiza o slug caso o título tenha mudado
         if ($noticia->titulo !== $request->titulo) {
             $data['slug'] = Str::slug($request->titulo) . '-' . uniqid();
         }
@@ -155,17 +150,14 @@ class NoticiaController extends Controller
         $pathAntigo = $noticia->imagem_destaque;
 
         try {
-            // Verifica se enviou uma imagem nova
+            // Conversão da nova imagem
             if ($request->hasFile('imagem_destaque')) {
-                $request->validate(['imagem_destaque' => 'image|max:2048']);
-                $novoPath = $request->file('imagem_destaque')->store('noticias', 'public');
+                $novoPath = ImageUploadService::uploadAndOptimize($request->file('imagem_destaque'), 'noticias', 85);
                 $data['imagem_destaque'] = $novoPath;
             }
 
-            // Atualiza no BD
             $noticia->update($data);
 
-            // Se atualizou com sucesso no BD e enviou imagem nova, aí sim apagamos a velha
             if ($novoPath && $pathAntigo && Storage::disk('public')->exists($pathAntigo)) {
                 Storage::disk('public')->delete($pathAntigo);
             }
@@ -173,7 +165,6 @@ class NoticiaController extends Controller
             return redirect()->route('admin.noticias.index')->with('success', 'Notícia atualizada com sucesso!');
 
         } catch (\Exception $e) {
-            // Se falhou no BD, apaga a foto nova que tinha subido para não virar lixo
             if ($novoPath && Storage::disk('public')->exists($novoPath)) {
                 Storage::disk('public')->delete($novoPath);
             }

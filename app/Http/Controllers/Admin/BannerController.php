@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Banner;
 use App\Models\Tag;
+use App\Services\ImageUploadService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log; // Importante para gravar os erros
 
@@ -27,8 +28,8 @@ class BannerController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'caminho_imagem' => 'required|image|max:1024',
-            'caminho_imagem_mobile' => 'nullable|image|max:1024',
+            'caminho_imagem' => 'required|image|max:5120', // Aumentei o limite inicial, pois o WebP vai esmagar o arquivo depois
+            'caminho_imagem_mobile' => 'nullable|image|max:5120',
             'titulo'         => 'required|string',
             'tag_id'         => 'nullable|exists:tags,id',
             'tema_cor'       => 'required|string',
@@ -38,11 +39,13 @@ class BannerController extends Controller
         $pathMobile = null;
 
         try {
-            // 1. Tenta subir os arquivos PRIMEIRO
-            $pathPC = $request->file('caminho_imagem')->store('banners', 'public');
+            // 1. Tenta subir os arquivos usando o NOVO MOTOR DE OTIMIZAÇÃO (WebP 85%)
+            if ($request->hasFile('caminho_imagem')) {
+                $pathPC = ImageUploadService::uploadAndOptimize($request->file('caminho_imagem'), 'banners', 85);
+            }
             
             if ($request->hasFile('caminho_imagem_mobile')) {
-                $pathMobile = $request->file('caminho_imagem_mobile')->store('banners', 'public');
+                $pathMobile = ImageUploadService::uploadAndOptimize($request->file('caminho_imagem_mobile'), 'banners', 85);
             }
 
             // 2. Tenta salvar no Banco de Dados
@@ -65,7 +68,7 @@ class BannerController extends Controller
                 'ordem'         => (Banner::max('ordem') ?? 0) + 1,
             ]);
 
-            return redirect()->back()->with('success', 'Banner criado com sucesso!');
+            return redirect()->back()->with('success', 'Banner criado e otimizado com sucesso!');
 
         } catch (\Exception $e) {
             // 3. SE ALGO DEU ERRADO: Limpeza do lixo (arquivos órfãos)
@@ -82,8 +85,8 @@ class BannerController extends Controller
         $banner = Banner::findOrFail($id);
 
         $request->validate([
-            'caminho_imagem' => 'nullable|image|max:1024',
-            'caminho_imagem_mobile' => 'nullable|image|max:1024',
+            'caminho_imagem' => 'nullable|image|max:5120',
+            'caminho_imagem_mobile' => 'nullable|image|max:5120',
             'titulo'         => 'required|string',
             'tag_id'         => 'nullable|exists:tags,id',
             'tema_cor'       => 'required|string',
@@ -95,13 +98,13 @@ class BannerController extends Controller
         $antigoPathMobile = $banner->caminho_imagem_mobile;
 
         try {
-            // 1. Faz upload das novas imagens (se existirem), mas AINDA NÃO apaga as velhas
+            // 1. Upload e conversão WebP (mantendo as imagens velhas a salvo por enquanto)
             if ($request->hasFile('caminho_imagem')) {
-                $novoPathPC = $request->file('caminho_imagem')->store('banners', 'public');
+                $novoPathPC = ImageUploadService::uploadAndOptimize($request->file('caminho_imagem'), 'banners', 85);
             }
 
             if ($request->hasFile('caminho_imagem_mobile')) {
-                $novoPathMobile = $request->file('caminho_imagem_mobile')->store('banners', 'public');
+                $novoPathMobile = ImageUploadService::uploadAndOptimize($request->file('caminho_imagem_mobile'), 'banners', 85);
             }
 
             // 2. Atualiza o Banco de Dados
@@ -123,14 +126,14 @@ class BannerController extends Controller
                 'data_fim'      => $request->data_fim,
             ]);
 
-            // 3. Sucesso no BD? Agora sim apagamos as imagens velhas
+            // 3. Sucesso no BD? Agora apagamos as imagens velhas (sejam JPG, PNG ou WebP)
             if ($novoPathPC && $antigoPathPC) Storage::disk('public')->delete($antigoPathPC);
             if ($novoPathMobile && $antigoPathMobile) Storage::disk('public')->delete($antigoPathMobile);
 
             return redirect()->back()->with('success', 'Banner atualizado com sucesso!');
 
         } catch (\Exception $e) {
-            // 4. Falhou no BD? Apaga as imagens NOVAS que acabaram de subir para não virarem lixo
+            // 4. Falhou no BD? Apaga os WebP novos que acabaram de subir
             if ($novoPathPC) Storage::disk('public')->delete($novoPathPC);
             if ($novoPathMobile) Storage::disk('public')->delete($novoPathMobile);
 
