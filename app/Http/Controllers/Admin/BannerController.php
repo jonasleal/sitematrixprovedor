@@ -90,6 +90,7 @@ class BannerController extends Controller
             'titulo'         => 'required|string',
             'tag_id'         => 'nullable|exists:tags,id',
             'tema_cor'       => 'required|string',
+            
         ], $this->mensagensErro);
 
         $novoPathPC = null;

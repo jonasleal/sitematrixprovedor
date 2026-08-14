@@ -43,12 +43,12 @@
                 <div class="bg-gray-900 rounded-3xl overflow-hidden relative border border-gray-700 flex shadow-2xl mx-auto transition-all duration-500"
                      :class="viewMobile ? 'w-[400px] h-[700px] flex-col' : 'w-full h-[450px] flex-row'">
                     
-                    <div class="p-8 md:p-12 flex flex-col justify-center z-10 w-full" 
+                    <div class="p-8 md:p-12 flex flex-col justify-center z-10" 
+                         x-show="form.proporcao_imagem != '100'"
                          :class="[textoWidthClass(), viewMobile ? 'h-1/2' : 'h-full', {'items-center': form.titulo.includes('[centro]'), 'items-end': form.titulo.includes('[direita]')}]">
                         
                         <span class="text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block shadow-md text-gray-900 w-max"
                               :class="badgeColorClass(form.tema_cor)">
-                            <!-- A Mágica do Preview: Busca o nome da tag pelo ID selecionado -->
                             <span x-text="getNomeTag(form.tag_id) || 'DESTAQUE'"></span>
                         </span>
                         
@@ -61,7 +61,7 @@
                         <button class="bg-white text-gray-900 px-6 py-3 rounded-lg font-bold shadow-lg transition hover:bg-gray-200 w-max" x-text="form.texto_botao || 'Saiba Mais'"></button>
                     </div>
 
-                    <div class="w-full relative overflow-hidden bg-black flex-shrink-0" :class="[imagemWidthClass(), viewMobile ? 'h-1/2' : 'h-full']">
+                    <div class="relative overflow-hidden bg-black flex-shrink-0" :class="[imagemWidthClass(), viewMobile && form.proporcao_imagem != '100' ? 'h-1/2' : 'h-full']">
                         <template x-if="(viewMobile && imageMobilePreview) || (!viewMobile && imagePreview)">
                             <img :src="viewMobile ? (imageMobilePreview || imagePreview) : imagePreview" 
                                  :style="`object-position: ${form.posicao_x}% ${form.posicao_y}%; transform: scale(${form.zoom / 100});`"
@@ -73,10 +73,9 @@
                                 Nenhuma imagem
                             </div>
                         </template>
-                        <div class="absolute inset-0" :class="viewMobile ? 'bg-gradient-to-b from-gray-900 via-transparent to-transparent' : 'bg-gradient-to-r from-gray-900/80 to-transparent'"></div>
+                        <div class="absolute inset-0" x-show="form.proporcao_imagem != '100'" :class="viewMobile ? 'bg-gradient-to-b from-gray-900 via-transparent to-transparent' : 'bg-gradient-to-r from-gray-900/80 to-transparent'"></div>
                     </div>
                 </div>
-            </div>
 
             <div id="form-container" class="bg-white border border-gray-200 shadow-md rounded-2xl p-6 md:p-8 space-y-6 mt-8">
                 <div class="flex justify-between items-center border-b border-gray-200 pb-4">
@@ -106,11 +105,12 @@
                         </div>
 
                         <div class="lg:col-span-2">
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Proporção da Tela (PC)</label>
-                            <select name="proporcao_imagem" x-model="form.proporcao_imagem" class="block w-full rounded-lg border-gray-300 text-sm text-indigo-700 font-semibold bg-indigo-50">
-                                <option value="50">50% Texto | Imagem Rec.: 640x450px</option>
-                                <option value="60">40% Texto | Imagem Rec.: 768x450px</option>
-                                <option value="40">60% Texto | Imagem Rec.: 512x450px</option>
+                            <x-input-label for="proporcao_imagem" value="Proporção da Imagem / Layout" />
+                            <select name="proporcao_imagem" id="proporcao_imagem" x-model="form.proporcao_imagem" class="w-full mt-1 border-gray-300 rounded-md shadow-sm">
+                                <option value="40">40% Imagem | Imagem Rec.: 512x450px</option>
+                                <option value="50">50% Imagem | Imagem Rec.: 640x450px</option>
+                                <option value="60">60% Imagem | Imagem Rec.: 768x450px</option>
+                                <option value="100">100% Imagem | Imagem Rec.: 1280x450px</option>
                             </select>
                         </div>
                     </div>
@@ -389,18 +389,20 @@
                 
                 tituloPreview() {
                     if (this.viewMobile) return "Preview Mobile (400x700px)";
+                    if (this.form.proporcao_imagem == '100') return "Preview Desktop | 100% Imagem (Full Banner)";
                     let txt = 100 - parseInt(this.form.proporcao_imagem);
                     return `Preview Desktop | Área Exata do Site | Texto: ${txt}% - Imagem: ${this.form.proporcao_imagem}%`;
                 },
                 
                 imagemWidthClass() {
-                    if (this.viewMobile) return 'w-full';
+                    if (this.viewMobile || this.form.proporcao_imagem == '100') return 'w-full';
                     if (this.form.proporcao_imagem == '60') return 'md:w-3/5';
                     if (this.form.proporcao_imagem == '40') return 'md:w-2/5';
                     return 'md:w-1/2';
                 },
                 
                 textoWidthClass() {
+                    if (this.form.proporcao_imagem == '100') return 'hidden w-0';
                     if (this.viewMobile) return 'w-full';
                     if (this.form.proporcao_imagem == '60') return 'md:w-2/5';
                     if (this.form.proporcao_imagem == '40') return 'md:w-3/5';

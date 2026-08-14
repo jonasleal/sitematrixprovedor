@@ -43,6 +43,9 @@
                     $estilo = array_key_exists($banner->tema_cor, $temas) ? $temas[$banner->tema_cor] : $temas['green-cyan'];
 
                     $prop = $banner->proporcao_imagem ?? '50';
+                    $isFullBanner = ($prop == '100');
+                    
+                    // Só calcula as classes de texto/imagem caso não seja Full Banner
                     $imgClass = $prop == '60' ? 'md:w-3/5' : ($prop == '40' ? 'md:w-2/5' : 'md:w-1/2');
                     $txtClass = $prop == '60' ? 'md:w-2/5' : ($prop == '40' ? 'md:w-3/5' : 'md:w-1/2');
                 @endphp
@@ -55,44 +58,72 @@
                      x-transition:leave="transition ease-in duration-500 transform absolute inset-0"
                      x-transition:leave-start="opacity-100 translate-x-0"
                      x-transition:leave-end="opacity-0 -translate-x-8"
-                     class="absolute inset-0 w-full h-full flex flex-col {!! $direcaoFlex !!} items-stretch"> 
+                     class="absolute inset-0 w-full h-full"> 
                      
-                    <div class="h-1/2 md:h-full w-full {{ $txtClass }} p-8 md:p-12 text-left flex flex-col justify-center z-10 relative">
-                        <span class="bg-gradient-to-r {{ $estilo['badge'] }} text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block self-start z-10 w-max">
-                            <!-- CORREÇÃO AQUI: Busca o nome usando a relação do model -->
-                            {{ $banner->tag->nome ?? 'Destaque' }}
-                        </span>
-                        
-                        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 z-10 w-full">
-                            {!! $banner->titulo_formatado !!}
-                        </h2>
-                        
-                        <p class="text-gray-300 mb-6 text-sm md:text-base leading-relaxed z-10 w-full">
-                            {!! $banner->descricao_formatada !!}
-                        </p>
-                        
-                        @if($banner->link_destino)
-                            <a href="{{ $banner->link_destino }}" class="bg-white text-gray-900 px-6 py-3 rounded-lg font-bold {{ $estilo['hover_btn'] }} transition duration-300 self-start text-center z-10 shadow-lg w-max">
-                                {{ $banner->texto_botao ?: 'Saiba Mais' }}
-                            </a>
-                        @endif
-                    </div>
-                    
-                    <div class="h-1/2 md:h-full w-full {{ $imgClass }} relative overflow-hidden bg-black flex-shrink-0">
-                        <img src="{{ asset('storage/' . ($banner->caminho_imagem_mobile ?: $banner->caminho_imagem)) }}" 
-                             alt="{{ strip_tags($banner->titulo) }}" 
-                             style="object-position: {{ $banner->posicao_x ?? 50 }}% {{ $banner->posicao_y ?? 50 }}%; transform: scale({{ ($banner->zoom ?? 100) / 100 }});"
-                             class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-in-out md:hidden">
+                    @if($isFullBanner)
+                        {{-- ========================================== --}}
+                        {{-- MODO FULL BANNER (100% IMAGEM CLICÁVEL)    --}}
+                        {{-- ========================================== --}}
+                        <div class="w-full h-full relative overflow-hidden group/fullbanner">
+                            @if($banner->link_destino)
+                                <a href="{{ $banner->link_destino }}" class="block w-full h-full">
+                            @endif
+                            
+                            <img src="{{ asset('storage/' . ($banner->caminho_imagem_mobile ?: $banner->caminho_imagem)) }}" 
+                                 alt="{{ strip_tags($banner->titulo) }}" 
+                                 style="object-position: {{ $banner->posicao_x ?? 50 }}% {{ $banner->posicao_y ?? 50 }}%; transform: scale({{ ($banner->zoom ?? 100) / 100 }});"
+                                 class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-in-out md:hidden group-hover/fullbanner:scale-105">
 
-                        <img src="{{ asset('storage/' . $banner->caminho_imagem) }}" 
-                             alt="{{ strip_tags($banner->titulo) }}" 
-                             style="object-position: {{ $banner->posicao_x ?? 50 }}% {{ $banner->posicao_y ?? 50 }}%; transform: scale({{ ($banner->zoom ?? 100) / 100 }});"
-                             class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-in-out hidden md:block">
-                        
-                        <div class="absolute inset-0 bg-gradient-to-r {{ $inverter ? 'from-transparent to-gray-900/80' : 'from-gray-900/80 to-transparent' }} md:block hidden"></div>
-                        <div class="absolute inset-0 bg-gradient-to-b from-gray-900 via-transparent to-transparent md:hidden block"></div>
-                    </div>
+                            <img src="{{ asset('storage/' . $banner->caminho_imagem) }}" 
+                                 alt="{{ strip_tags($banner->titulo) }}" 
+                                 style="object-position: {{ $banner->posicao_x ?? 50 }}% {{ $banner->posicao_y ?? 50 }}%; transform: scale({{ ($banner->zoom ?? 100) / 100 }});"
+                                 class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-in-out hidden md:block group-hover/fullbanner:scale-105">
+                            
+                            @if($banner->link_destino)
+                                </a>
+                            @endif
+                        </div>
+                    @else
+                        {{-- ========================================== --}}
+                        {{-- MODO PADRÃO (TEXTO + IMAGEM)               --}}
+                        {{-- ========================================== --}}
+                        <div class="w-full h-full flex flex-col {!! $direcaoFlex !!} items-stretch">
+                            <div class="h-1/2 md:h-full w-full {{ $txtClass }} p-8 md:p-12 text-left flex flex-col justify-center z-10 relative">
+                                <span class="bg-gradient-to-r {{ $estilo['badge'] }} text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block self-start z-10 w-max">
+                                    {{ $banner->tag->nome ?? 'Destaque' }}
+                                </span>
+                                
+                                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 z-10 w-full">
+                                    {!! $banner->titulo_formatado !!}
+                                </h2>
+                                
+                                <p class="text-gray-300 mb-6 text-sm md:text-base leading-relaxed z-10 w-full">
+                                    {!! $banner->descricao_formatada !!}
+                                </p>
+                                
+                                @if($banner->link_destino)
+                                    <a href="{{ $banner->link_destino }}" class="bg-white text-gray-900 px-6 py-3 rounded-lg font-bold {{ $estilo['hover_btn'] }} transition duration-300 self-start text-center z-10 shadow-lg w-max">
+                                        {{ $banner->texto_botao ?: 'Saiba Mais' }}
+                                    </a>
+                                @endif
+                            </div>
+                            
+                            <div class="h-1/2 md:h-full w-full {{ $imgClass }} relative overflow-hidden bg-black flex-shrink-0">
+                                <img src="{{ asset('storage/' . ($banner->caminho_imagem_mobile ?: $banner->caminho_imagem)) }}" 
+                                     alt="{{ strip_tags($banner->titulo) }}" 
+                                     style="object-position: {{ $banner->posicao_x ?? 50 }}% {{ $banner->posicao_y ?? 50 }}%; transform: scale({{ ($banner->zoom ?? 100) / 100 }});"
+                                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-in-out md:hidden">
 
+                                <img src="{{ asset('storage/' . $banner->caminho_imagem) }}" 
+                                     alt="{{ strip_tags($banner->titulo) }}" 
+                                     style="object-position: {{ $banner->posicao_x ?? 50 }}% {{ $banner->posicao_y ?? 50 }}%; transform: scale({{ ($banner->zoom ?? 100) / 100 }});"
+                                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-in-out hidden md:block">
+                            
+                                <div class="absolute inset-0 bg-gradient-to-r {{ $inverter ? 'from-transparent to-gray-900/80' : 'from-gray-900/80 to-transparent' }} md:block hidden"></div>
+                                <div class="absolute inset-0 bg-gradient-to-b from-gray-900 via-transparent to-transparent md:hidden block"></div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             @endforeach
         </div>
