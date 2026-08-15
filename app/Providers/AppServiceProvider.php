@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Support\Facades\Gate;
 use App\Models\Configuracao;
 use League\Flysystem\Filesystem;
 use Google\Client;
@@ -21,6 +22,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Gate::before(function ($user, $ability) {
+            return $user->id === 1 ? true : null;
+        });
         // =========================================================
         // 1. COMPARTILHAMENTO GLOBAL DE CONFIGURAÇÕES (SITE MATRIX)
         // =========================================================

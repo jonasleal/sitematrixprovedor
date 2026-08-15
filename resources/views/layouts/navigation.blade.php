@@ -1,30 +1,22 @@
 <nav x-data="{ open: false }" class="bg-white border-b border-gray-100 shadow-sm">
     
-    <!-- ========================================== -->
-    <!-- BARRA PRINCIPAL SUPERIOR                       -->
-    <!-- ========================================== -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
                 
-                <!-- 1. LOGO DA EMPRESA -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('dashboard') }}">
                         <img src="/assets/logo-matrix.png" alt="Matrix Provedor" class="block h-10 w-auto" />
                     </a>
                 </div>
 
-                <!-- ========================================== -->
-                <!-- 2. NAVEGAÇÃO DESKTOP (Telas Grandes)           -->
-                <!-- ========================================== -->
                 <div class="hidden space-x-2 sm:-my-px sm:ms-10 sm:flex">
                     
-                    <!-- Dashboard Isolado -->
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
-                    <!-- Grupo: COMERCIAL -->
+                    @canany(['ver planos', 'ver cobertura'])
                     <div class="hidden sm:flex sm:items-center sm:ms-4">
                         <x-dropdown align="left" width="48">
                             <x-slot name="trigger">
@@ -36,13 +28,18 @@
                                 </button>
                             </x-slot>
                             <x-slot name="content">
-                                <x-dropdown-link :href="route('admin.planos.index')">{{ __('Planos de Internet') }}</x-dropdown-link>
-                                <x-dropdown-link :href="route('admin.mapa')">{{ __('Mapa de Cobertura') }}</x-dropdown-link>
+                                @can('ver planos')
+                                    <x-dropdown-link :href="route('admin.planos.index')">{{ __('Planos de Internet') }}</x-dropdown-link>
+                                @endcan
+                                @can('ver cobertura')
+                                    <x-dropdown-link :href="route('admin.mapa')">{{ __('Mapa de Cobertura') }}</x-dropdown-link>
+                                @endcan
                             </x-slot>
                         </x-dropdown>
                     </div>
+                    @endcanany
 
-                    <!-- Grupo: MARKETING E COMUNICAÇÃO -->
+                    @canany(['ver banners', 'ver noticias'])
                     <div class="hidden sm:flex sm:items-center sm:ms-4">
                         <x-dropdown align="left" width="48">
                             <x-slot name="trigger">
@@ -54,13 +51,18 @@
                                 </button>
                             </x-slot>
                             <x-slot name="content">
-                                <x-dropdown-link :href="route('admin.banners.index')">{{ __('Banners da Home') }}</x-dropdown-link>
-                                <x-dropdown-link :href="route('admin.noticias.index')">{{ __('Notícias e Avisos') }}</x-dropdown-link>
+                                @can('ver banners')
+                                    <x-dropdown-link :href="route('admin.banners.index')">{{ __('Banners da Home') }}</x-dropdown-link>
+                                @endcan
+                                @can('ver noticias')
+                                    <x-dropdown-link :href="route('admin.noticias.index')">{{ __('Notícias e Avisos') }}</x-dropdown-link>
+                                @endcan
                             </x-slot>
                         </x-dropdown>
                     </div>
+                    @endcanany
 
-                    <!-- Grupo: SISTEMA E SITE -->
+                    @canany(['ver paginas', 'ver downloads', 'ver configuracoes', 'ver equipa'])
                     <div class="hidden sm:flex sm:items-center sm:ms-4">
                         <x-dropdown align="left" width="48">
                             <x-slot name="trigger">
@@ -72,19 +74,29 @@
                                 </button>
                             </x-slot>
                             <x-slot name="content">
-                                <x-dropdown-link :href="route('admin.paginas.index')">{{ __('Páginas Institucionais') }}</x-dropdown-link>
-                                <x-dropdown-link :href="route('admin.downloads.index')">{{ __('Central de Downloads') }}</x-dropdown-link>
-                                <x-dropdown-link :href="route('admin.configuracoes.index')">{{ __('Configurações Globais') }}</x-dropdown-link>
+                                @can('ver paginas')
+                                    <x-dropdown-link :href="route('admin.paginas.index')">{{ __('Páginas Institucionais') }}</x-dropdown-link>
+                                @endcan
+                                @can('ver downloads')
+                                    <x-dropdown-link :href="route('admin.downloads.index')">{{ __('Central de Downloads') }}</x-dropdown-link>
+                                @endcan
+                                @can('ver configuracoes')
+                                    <x-dropdown-link :href="route('admin.configuracoes.index')">{{ __('Configurações Globais') }}</x-dropdown-link>
+                                @endcan
                                 
+                                @can('ver equipa')
+                                    <div class="border-t border-gray-100 my-1"></div>
+                                    <x-dropdown-link :href="route('admin.equipa.index')" class="text-indigo-600 font-bold bg-indigo-50 hover:bg-indigo-100">
+                                        {{ __('Gestão de Equipa') }}
+                                    </x-dropdown-link>
+                                @endcan
                             </x-slot>
                         </x-dropdown>
                     </div>
+                    @endcanany
                 </div>
             </div>
 
-            <!-- ========================================== -->
-            <!-- 3. PERFIL DO USUÁRIO LOGADO E SAIR             -->
-            <!-- ========================================== -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
@@ -101,7 +113,6 @@
                         <x-dropdown-link :href="route('profile.edit')">
                             {{ __('Meu Perfil') }}
                         </x-dropdown-link>
-                        <!-- Log Out -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <x-dropdown-link :href="route('logout')"
@@ -114,9 +125,6 @@
                 </x-dropdown>
             </div>
 
-            <!-- ========================================== -->
-            <!-- 4. BOTÃO HAMBURGER (Menu Mobile)               -->
-            <!-- ========================================== -->
             <div class="-me-2 flex items-center sm:hidden">
                 <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
                     <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
@@ -128,9 +136,6 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- NAVEGAÇÃO MOBILE (SMARTPHONES)                 -->
-    <!-- ========================================== -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden border-t border-gray-200">
         <div class="pt-2 pb-3 space-y-1">
             
@@ -138,44 +143,65 @@
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
 
-            <!-- Separador: Comercial -->
+            @canany(['ver planos', 'ver cobertura'])
             <div class="px-4 py-2 mt-2 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">
                 Comercial
             </div>
-            <x-responsive-nav-link :href="route('admin.planos.index')" :active="request()->routeIs('admin.planos.*')">
-                {{ __('Planos de Internet') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('admin.mapa')" :active="request()->routeIs('admin.mapa')">
-                {{ __('Mapa de Cobertura') }}
-            </x-responsive-nav-link>
+            @can('ver planos')
+                <x-responsive-nav-link :href="route('admin.planos.index')" :active="request()->routeIs('admin.planos.*')">
+                    {{ __('Planos de Internet') }}
+                </x-responsive-nav-link>
+            @endcan
+            @can('ver cobertura')
+                <x-responsive-nav-link :href="route('admin.mapa')" :active="request()->routeIs('admin.mapa')">
+                    {{ __('Mapa de Cobertura') }}
+                </x-responsive-nav-link>
+            @endcan
+            @endcanany
 
-            <!-- Separador: Marketing -->
+            @canany(['ver banners', 'ver noticias'])
             <div class="px-4 py-2 mt-2 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">
                 Marketing
             </div>
-            <x-responsive-nav-link :href="route('admin.banners.index')" :active="request()->routeIs('admin.banners.*')">
-                {{ __('Banners da Home') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('admin.noticias.index')" :active="request()->routeIs('admin.noticias.*')">
-                {{ __('Notícias e Avisos') }}
-            </x-responsive-nav-link>
+            @can('ver banners')
+                <x-responsive-nav-link :href="route('admin.banners.index')" :active="request()->routeIs('admin.banners.*')">
+                    {{ __('Banners da Home') }}
+                </x-responsive-nav-link>
+            @endcan
+            @can('ver noticias')
+                <x-responsive-nav-link :href="route('admin.noticias.index')" :active="request()->routeIs('admin.noticias.*')">
+                    {{ __('Notícias e Avisos') }}
+                </x-responsive-nav-link>
+            @endcan
+            @endcanany
 
-            <!-- Separador: Sistema -->
+            @canany(['ver paginas', 'ver downloads', 'ver configuracoes', 'ver equipa'])
             <div class="px-4 py-2 mt-2 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">
                 Sistema
             </div>
-            <x-responsive-nav-link :href="route('admin.paginas.index')" :active="request()->routeIs('admin.paginas.*')">
-                {{ __('Páginas Institucionais') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('admin.downloads.index')" :active="request()->routeIs('admin.downloads.*')">
-                {{ __('Central de Downloads') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('admin.configuracoes.index')" :active="request()->routeIs('admin.configuracoes.*')">
-                {{ __('Configurações Globais') }}
-            </x-responsive-nav-link>
+            @can('ver paginas')
+                <x-responsive-nav-link :href="route('admin.paginas.index')" :active="request()->routeIs('admin.paginas.*')">
+                    {{ __('Páginas Institucionais') }}
+                </x-responsive-nav-link>
+            @endcan
+            @can('ver downloads')
+                <x-responsive-nav-link :href="route('admin.downloads.index')" :active="request()->routeIs('admin.downloads.*')">
+                    {{ __('Central de Downloads') }}
+                </x-responsive-nav-link>
+            @endcan
+            @can('ver configuracoes')
+                <x-responsive-nav-link :href="route('admin.configuracoes.index')" :active="request()->routeIs('admin.configuracoes.*')">
+                    {{ __('Configurações Globais') }}
+                </x-responsive-nav-link>
+            @endcan
+            @can('ver equipa')
+                <x-responsive-nav-link :href="'#'" class="text-indigo-600 font-bold bg-indigo-50">
+                    {{ __('Gestão de Equipa') }}
+                </x-responsive-nav-link>
+            @endcan
+            @endcanany
         </div>
 
-        <!-- Opções do Usuário (Mobile) -->
         <div class="pt-4 pb-1 border-t border-gray-200 bg-gray-50">
             <div class="px-4">
                 <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>

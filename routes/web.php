@@ -69,59 +69,90 @@ Route::get('/api/poligonos', [PoligonoController::class, 'indexData']);
 // ==========================================
 Route::middleware(['auth', 'verified'])->group(function () {
     
-    // 1. Dashboard (Lista de Leads)
+    // ==========================================
+    // ROTAS BASE (Todos Logados Acessam)
+    // ==========================================
+    
+    // O Dashboard será visível, mas os cards/listas lá dentro podem ser travados via @can no Blade
     Route::get('/dashboard', function () {
         $leads = LeadCobertura::orderBy('created_at', 'desc')->get();
         return view('dashboard', compact('leads'));
     })->name('dashboard');
 
-    // 2. Mapa de Cobertura (Geofencing)
-    Route::get('/admin/mapa-cobertura', [PoligonoController::class, 'index'])->name('admin.mapa');
-    Route::get('/admin/mapa-cobertura/data', [PoligonoController::class, 'indexData']); 
-    Route::post('/admin/mapa-cobertura', [PoligonoController::class, 'store']);
-    Route::put('/admin/mapa-cobertura/{id}', [PoligonoController::class, 'update']);
-    Route::delete('/admin/mapa-cobertura/{id}', [PoligonoController::class, 'destroy']);
-
-    // 3. Gerenciamento do Perfil do Administrador
+    // Gerenciamento do próprio Perfil
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-	
-	//4. Gerência de Personalização de Planos
-    Route::get('/admin/planos', [PlanoDetalheController::class, 'index'])->name('admin.planos.index');
-    Route::post('/admin/planos', [PlanoDetalheController::class, 'store'])->name('admin.planos.store');
-	// 5. Configurações Globais
-    Route::get('/admin/configuracoes', [\App\Http\Controllers\Admin\ConfiguracaoController::class, 'index'])->name('admin.configuracoes.index');
-    Route::post('/admin/configuracoes', [\App\Http\Controllers\Admin\ConfiguracaoController::class, 'store'])->name('admin.configuracoes.store');
-    Route::post('/admin/backup/run', [\App\Http\Controllers\Admin\ConfiguracaoController::class, 'runBackup'])->name('admin.backup.run');
-	// 6. Banners
-    Route::get('/admin/banners', [\App\Http\Controllers\Admin\BannerController::class, 'index'])->name('admin.banners.index');
-    Route::post('/admin/banners', [\App\Http\Controllers\Admin\BannerController::class, 'store'])->name('admin.banners.store');
-    Route::delete('/admin/banners/{id}', [\App\Http\Controllers\Admin\BannerController::class, 'destroy'])->name('admin.banners.destroy');
-	// 7. Notícias
-    Route::get('/admin/noticias', [\App\Http\Controllers\Admin\NoticiaController::class, 'index'])->name('admin.noticias.index');
-    Route::post('/admin/noticias', [\App\Http\Controllers\Admin\NoticiaController::class, 'store'])->name('admin.noticias.store');
-    Route::get('/admin/noticias/{id}/edit', [\App\Http\Controllers\Admin\NoticiaController::class, 'edit'])->name('admin.noticias.edit');
-    Route::put('/admin/noticias/{id}', [\App\Http\Controllers\Admin\NoticiaController::class, 'update'])->name('admin.noticias.update');
-    Route::delete('/admin/noticias/{id}', [\App\Http\Controllers\Admin\NoticiaController::class, 'destroy'])->name('admin.noticias.destroy');
-    Route::post('/admin/noticias/upload-imagem', [App\Http\Controllers\Admin\NoticiaController::class, 'uploadImagem'])->name('admin.noticias.upload-imagem');
-	// 8 . Banners
-	// Rotas de Banners Avançados
-    Route::get('/admin/banners', [\App\Http\Controllers\Admin\BannerController::class, 'index'])->name('admin.banners.index');
-    Route::post('/admin/banners', [\App\Http\Controllers\Admin\BannerController::class, 'store'])->name('admin.banners.store');
-    Route::put('/admin/banners/{id}', [\App\Http\Controllers\Admin\BannerController::class, 'update'])->name('admin.banners.update');
-    Route::patch('/admin/banners/{id}/toggle', [\App\Http\Controllers\Admin\BannerController::class, 'toggleStatus'])->name('admin.banners.toggle');
-    Route::post('/admin/banners/reordenar', [\App\Http\Controllers\Admin\BannerController::class, 'reordenar'])->name('admin.banners.reordenar');
-    Route::delete('/admin/banners/{id}', [\App\Http\Controllers\Admin\BannerController::class, 'destroy'])->name('admin.banners.destroy');
-    // 9 . TAGs
-    // Rotas de Gerenciamento de Tags Globais (Banners e Notícias)    
-    Route::post('/admin/tags', [\App\Http\Controllers\Admin\TagController::class, 'store'])->name('admin.tags.store');
-    Route::put('/admin/tags/{id}', [\App\Http\Controllers\Admin\TagController::class, 'update'])->name('admin.tags.update');
-    Route::delete('/admin/tags/{id}', [\App\Http\Controllers\Admin\TagController::class, 'destroy'])->name('admin.tags.destroy');
-    // 10. Páginas Institucionais Dinâmicas
-    Route::resource('/admin/paginas', PaginaController::class)->names('admin.paginas');
-    // 11. CRUD da Central de Downloads
-    Route::resource('/admin/downloads', DownloadController::class)->names('admin.downloads');
+
+
+    // ==========================================
+    // GRUPOS PROTEGIDOS POR PERMISSÃO
+    // ==========================================
+
+    // COBERTURA (Leads/Mapa)
+    Route::middleware('can:ver cobertura')->group(function () {
+        Route::get('/admin/mapa-cobertura', [PoligonoController::class, 'index'])->name('admin.mapa');
+        Route::get('/admin/mapa-cobertura/data', [PoligonoController::class, 'indexData']); 
+        Route::post('/admin/mapa-cobertura', [PoligonoController::class, 'store'])->middleware('can:criar cobertura');
+        Route::put('/admin/mapa-cobertura/{id}', [PoligonoController::class, 'update'])->middleware('can:editar cobertura');
+        Route::delete('/admin/mapa-cobertura/{id}', [PoligonoController::class, 'destroy'])->middleware('can:excluir cobertura');
+    });
+
+    // PLANOS
+    Route::middleware('can:ver planos')->group(function () {
+        Route::get('/admin/planos', [PlanoDetalheController::class, 'index'])->name('admin.planos.index');
+        Route::post('/admin/planos', [PlanoDetalheController::class, 'store'])->name('admin.planos.store')->middleware('can:criar planos');
+    });
+
+    // CONFIGURAÇÕES GLOBAIS
+    Route::middleware('can:ver configuracoes')->group(function () {
+        Route::get('/admin/configuracoes', [\App\Http\Controllers\Admin\ConfiguracaoController::class, 'index'])->name('admin.configuracoes.index');
+        Route::post('/admin/configuracoes', [\App\Http\Controllers\Admin\ConfiguracaoController::class, 'store'])->name('admin.configuracoes.store')->middleware('can:editar configuracoes');
+        Route::post('/admin/backup/run', [\App\Http\Controllers\Admin\ConfiguracaoController::class, 'runBackup'])->name('admin.backup.run')->middleware('can:editar configuracoes');
+    });
+
+    // BANNERS (Com as rotas avançadas)
+    Route::middleware('can:ver banners')->group(function () {
+        Route::get('/admin/banners', [\App\Http\Controllers\Admin\BannerController::class, 'index'])->name('admin.banners.index');
+        Route::post('/admin/banners', [\App\Http\Controllers\Admin\BannerController::class, 'store'])->name('admin.banners.store')->middleware('can:criar banners');
+        Route::put('/admin/banners/{id}', [\App\Http\Controllers\Admin\BannerController::class, 'update'])->name('admin.banners.update')->middleware('can:editar banners');
+        Route::patch('/admin/banners/{id}/toggle', [\App\Http\Controllers\Admin\BannerController::class, 'toggleStatus'])->name('admin.banners.toggle')->middleware('can:editar banners');
+        Route::post('/admin/banners/reordenar', [\App\Http\Controllers\Admin\BannerController::class, 'reordenar'])->name('admin.banners.reordenar')->middleware('can:editar banners');
+        Route::delete('/admin/banners/{id}', [\App\Http\Controllers\Admin\BannerController::class, 'destroy'])->name('admin.banners.destroy')->middleware('can:excluir banners');
+    });
+
+    // NOTÍCIAS
+    Route::middleware('can:ver noticias')->group(function () {
+        Route::get('/admin/noticias', [\App\Http\Controllers\Admin\NoticiaController::class, 'index'])->name('admin.noticias.index');
+        Route::post('/admin/noticias', [\App\Http\Controllers\Admin\NoticiaController::class, 'store'])->name('admin.noticias.store')->middleware('can:criar noticias');
+        Route::get('/admin/noticias/{id}/edit', [\App\Http\Controllers\Admin\NoticiaController::class, 'edit'])->name('admin.noticias.edit')->middleware('can:editar noticias');
+        Route::put('/admin/noticias/{id}', [\App\Http\Controllers\Admin\NoticiaController::class, 'update'])->name('admin.noticias.update')->middleware('can:editar noticias');
+        Route::post('/admin/noticias/upload-imagem', [\App\Http\Controllers\Admin\NoticiaController::class, 'uploadImagem'])->name('admin.noticias.upload-imagem')->middleware('can:criar noticias');
+        Route::delete('/admin/noticias/{id}', [\App\Http\Controllers\Admin\NoticiaController::class, 'destroy'])->name('admin.noticias.destroy')->middleware('can:excluir noticias');
+    });
+
+    // TAGS (Usadas por Banners e Notícias)
+    // Se o usuário pode ver banners ou notícias, ele pode ver as tags, mas para criar/editar ele precisa de permissão explícita
+    Route::middleware('can:editar banners,editar noticias')->group(function () {
+        Route::post('/admin/tags', [\App\Http\Controllers\Admin\TagController::class, 'store'])->name('admin.tags.store');
+        Route::put('/admin/tags/{id}', [\App\Http\Controllers\Admin\TagController::class, 'update'])->name('admin.tags.update');
+        Route::delete('/admin/tags/{id}', [\App\Http\Controllers\Admin\TagController::class, 'destroy'])->name('admin.tags.destroy');
+    });
+
+    // PÁGINAS INSTITUCIONAIS DINÂMICAS (Resource protegido no Controller ou via macro)
+    Route::resource('/admin/paginas', PaginaController::class)->names('admin.paginas')->middleware('can:ver paginas');
+    
+    // CENTRAL DE DOWNLOADS (Resource protegido no Controller ou via macro)
+    Route::resource('/admin/downloads', DownloadController::class)->names('admin.downloads')->middleware('can:ver downloads');
+
+    // GESTÃO DE EQUIPA
+    Route::middleware('can:ver equipa')->group(function () {
+        Route::get('admin/equipa', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('admin.equipa.index');
+        Route::post('admin/equipa', [\App\Http\Controllers\Admin\UserController::class, 'store'])->name('admin.equipa.store')->middleware('can:criar equipa');
+        Route::put('admin/equipa/{id}', [\App\Http\Controllers\Admin\UserController::class, 'update'])->name('admin.equipa.update')->middleware('can:editar equipa');
+        Route::delete('admin/equipa/{id}', [\App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('admin.equipa.destroy')->middleware('can:excluir equipa');
+    });
+
 });
 
 // Rota de Bloqueio (Futuramente consultará o SGP pelo IP do cliente)
