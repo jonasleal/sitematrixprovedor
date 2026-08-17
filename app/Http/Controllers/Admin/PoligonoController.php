@@ -52,12 +52,14 @@ class PoligonoController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-	// Atualiza APENAS as coordenadas de um polígono existente
+	
     public function update(Request $request, $id)
     {
         try {
             $poligono = PoligonoCobertura::findOrFail($id);
-            $poligono->coordenadas = $request->coordenadas;
+            if ($request->has('nome')) $poligono->nome = $request->nome;
+            if ($request->has('cor')) $poligono->cor = $request->cor;
+            if ($request->has('coordenadas')) $poligono->coordenadas = $request->coordenadas;
             $poligono->save();
 
             return response()->json(['message' => 'Área atualizada com sucesso!']);

@@ -90,4 +90,94 @@ class SgpService
             return null; // Retorna NULL para ativar o sistema de Cache local do Laravel
         }
     }
+
+    /**
+     * Busca OLTs, PONs e CTOs no SGP.
+     * Monta o dicionário F/S/P e cruza os dados, devolvendo mastigado para o Mapa NOC.
+     */
+    /**
+     * Busca OLTs, PONs e CTOs no SGP.
+     * Retorna estrutura detalhada para Agrupamento no Frontend (OLT -> Slot -> PON).
+     */
+    public function getDadosMapaNoc()
+    {
+        try {
+            $baseUrl = rtrim(env('SGP_API_URL'), '/');
+            $user = (string) env('SGP_API_USER', '');
+            $pass = (string) env('SGP_API_PASSWORD', '');
+
+            $http = \Illuminate\Support\Facades\Http::withBasicAuth($user, $pass)
+                        ->acceptJson()
+                        ->timeout(15);
+
+            $ponDict = [];
+            
+            // 1. Busca todas as OLTs
+            $oltsResp = $http->get($baseUrl . '/api/fttx/olt/list/');
+            
+            if ($oltsResp->successful() && is_array($oltsResp->json())) {
+                foreach ($oltsResp->json() as $olt) {
+                    if (!isset($olt['id'])) continue;
+                    
+                    // 2. Busca as PONs
+                    $ponsResp = $http->get($baseUrl . '/api/fttx/olt/' . $olt['id'] . '/pon/list/');
+                    
+                    if ($ponsResp->successful() && is_array($ponsResp->json())) {
+                        foreach ($ponsResp->json() as $pon) {
+                            $ponDict[$pon['id']] = [
+                                'olt_name' => $pon['olt_name'] ?? 'OLT Padrão',
+                                'slot' => $pon['slot'] ?? 0,
+                                'pon' => $pon['pon'] ?? 0,
+                                'description' => $pon['description'] ?? null
+                            ];
+                        }
+                    }
+                }
+            }
+
+            // 3. Busca TODAS as CTOs
+            $ctosResp = $http->get($baseUrl . '/api/fttx/splitter/all/');
+            
+            $ctosFormatadas = [];
+            $ponsAtivas = [];
+
+            if ($ctosResp->successful() && is_array($ctosResp->json())) {
+                foreach ($ctosResp->json() as $cto) {
+                    if (!empty($cto['map_ll'])) {
+                        $coords = array_map('trim', explode(',', $cto['map_ll']));
+                        
+                        if (count($coords) == 2 && is_numeric($coords[0]) && is_numeric($coords[1])) {
+                            $ponId = $cto['pon_id'] ?? 0;
+                            
+                            $ctosFormatadas[] = [
+                                'id' => $cto['id'] ?? 0,
+                                'nome' => $cto['ident'] ?? 'CTO S/N',
+                                'lat' => (float) $coords[0],
+                                'lng' => (float) $coords[1],
+                                'pon_id' => $ponId
+                            ];
+
+                            if (!isset($ponsAtivas[$ponId])) {
+                                $ponsAtivas[$ponId] = [
+                                    'id' => $ponId,
+                                    'olt_name' => $ponDict[$ponId]['olt_name'] ?? 'S/N',
+                                    'slot' => $ponDict[$ponId]['slot'] ?? 0,
+                                    'pon' => $ponDict[$ponId]['pon'] ?? 0,
+                                    'description' => $ponDict[$ponId]['description'] ?? null
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+
+            return [
+                'ctos' => $ctosFormatadas,
+                'pons' => array_values($ponsAtivas)
+            ];
+
+        } catch (\Throwable $th) {
+            throw new \Exception("Erro ao buscar dados do SGP: " . $th->getMessage());
+        }
+    }
 }

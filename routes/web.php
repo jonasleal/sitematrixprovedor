@@ -93,6 +93,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('can:ver cobertura')->group(function () {
         Route::get('/admin/mapa-cobertura', [PoligonoController::class, 'index'])->name('admin.mapa');
         Route::get('/admin/mapa-cobertura/data', [PoligonoController::class, 'indexData']); 
+        Route::get('/admin/mapa-cobertura/ctos', function (\App\Services\SgpService $sgp) {
+            return response()->json($sgp->getDadosMapaNoc());
+        });
         Route::post('/admin/mapa-cobertura', [PoligonoController::class, 'store'])->middleware('can:criar cobertura');
         Route::put('/admin/mapa-cobertura/{id}', [PoligonoController::class, 'update'])->middleware('can:editar cobertura');
         Route::delete('/admin/mapa-cobertura/{id}', [PoligonoController::class, 'destroy'])->middleware('can:excluir cobertura');
