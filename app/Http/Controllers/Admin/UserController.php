@@ -90,16 +90,19 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        if ($id == 1) {
-            return back()->with('error', 'O Super Administrador não pode ser excluído.');
+        $user = User::findOrFail($id);
+
+        // Trava para ninguém conseguir apagar o dono do painel
+        if ($user->id === 1 || $user->hasRole('super-admin')) {
+            return redirect()->route('admin.equipa.index')->with('error', 'Acesso negado: Não é possível apagar a conta do Superadmin principal.');
         }
 
-        if ($id == auth()->id()) {
-            return back()->with('error', 'Você não pode excluir a sua própria conta.');
+        // Previne que o administrador logado apague a si mesmo por aqui
+        if ($user->id === auth()->id()) {
+            return redirect()->route('admin.equipa.index')->with('error', 'Você não pode apagar a sua própria conta por este menu.');
         }
 
-        User::findOrFail($id)->delete();
-
-        return redirect()->route('admin.equipa.index')->with('success', 'Utilizador removido do sistema.');
+        $user->delete();
+        return redirect()->route('admin.equipa.index')->with('success', 'Utilizador removido com sucesso!');
     }
 }

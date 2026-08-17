@@ -54,13 +54,21 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 text-right">
-                                        <div class="flex justify-end gap-3">
-                                            <button @click="abrirModalEdicao({{ $user }}, {{ $user->permissions->pluck('name') }})" class="text-indigo-600 hover:text-indigo-900 font-bold">Editar / Acessos</button>
-                                            
-                                            <form action="{{ route('admin.equipa.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja remover este membro?');">
-                                                @csrf @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900 font-bold">Excluir</button>
-                                            </form>
+                                        <div class="flex justify-end gap-3 items-center">
+                                            <button @click="abrirModalEdicao({{ $user }}, {{ $user->permissions->pluck('name') }})" class="text-indigo-600 hover:text-indigo-900 font-bold">
+                                                Editar / Acessos
+                                            </button>
+
+                                            @if($user->id !== 1 && !$user->hasRole('super-admin') && $user->id !== auth()->id())
+                                                <form action="{{ route('admin.equipa.destroy', $user->id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja remover este membro?');">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit" class="text-red-600 hover:text-red-900 font-bold">Excluir</button>
+                                                </form>
+                                            @else
+                                                <span class="text-gray-400 italic text-xs px-2 flex items-center" title="Conta protegida contra exclusão">
+                                                    <i class="fas fa-shield-alt mr-1"></i> Protegido
+                                                </span>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

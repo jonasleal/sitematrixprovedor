@@ -48,6 +48,13 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        // ZERO GAMBIARRAS: Trava de segurança intransponível para o Superadmin (ID 1)
+        if ($user->id === 1 || $user->hasRole('super-admin')) {
+            return redirect()->back()->withErrors([
+                'error' => 'A conta raiz (Superadmin) é protegida pelo sistema e não pode ser apagada.'
+            ]);
+        }
+
         Auth::logout();
 
         $user->delete();
@@ -55,6 +62,6 @@ class ProfileController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return Redirect::to('/');
+        return redirect('/');
     }
 }
