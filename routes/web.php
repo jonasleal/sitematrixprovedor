@@ -157,6 +157,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('admin/equipa/{id}', [\App\Http\Controllers\Admin\UserController::class, 'update'])->name('admin.equipa.update')->middleware('can:editar equipa');
         Route::delete('admin/equipa/{id}', [\App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('admin.equipa.destroy')->middleware('can:excluir equipa');
     });
+    // Gestão de Backups (Google Drive)
+    Route::get('/backups', [\App\Http\Controllers\Admin\BackupController::class, 'index'])->name('backups.index');
+    Route::post('/backups/restore', [\App\Http\Controllers\Admin\BackupController::class, 'restore'])->name('backups.restore');
 
 });
 

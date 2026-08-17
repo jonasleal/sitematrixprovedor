@@ -62,7 +62,7 @@
                     </div>
                     @endcanany
 
-                    @canany(['ver paginas', 'ver downloads', 'ver configuracoes', 'ver equipa'])
+                    @canany(['ver paginas', 'ver downloads', 'ver configuracoes', 'ver backups', 'ver equipa'])
                     <div class="hidden sm:flex sm:items-center sm:ms-4">
                         <x-dropdown align="left" width="48">
                             <x-slot name="trigger">
@@ -82,6 +82,11 @@
                                 @endcan
                                 @can('ver configuracoes')
                                     <x-dropdown-link :href="route('admin.configuracoes.index')">{{ __('Configurações Globais') }}</x-dropdown-link>
+                                @endcan
+                                @can('ver backups')
+                                    <x-dropdown-link :href="route('backups.index')" class="hover:bg-blue-50 text-blue-600">
+                                        {{ __('Rotinas de Backup') }}
+                                    </x-dropdown-link>
                                 @endcan
                                 
                                 @can('ver equipa')
@@ -175,7 +180,7 @@
             @endcan
             @endcanany
 
-            @canany(['ver paginas', 'ver downloads', 'ver configuracoes', 'ver equipa'])
+            @canany(['ver paginas', 'ver downloads', 'ver configuracoes', 'ver backups', 'ver equipa'])
             <div class="px-4 py-2 mt-2 text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">
                 Sistema
             </div>
@@ -192,6 +197,11 @@
             @can('ver configuracoes')
                 <x-responsive-nav-link :href="route('admin.configuracoes.index')" :active="request()->routeIs('admin.configuracoes.*')">
                     {{ __('Configurações Globais') }}
+                </x-responsive-nav-link>
+            @endcan
+            @can('ver backups')
+                <x-responsive-nav-link :href="route('backups.index')" :active="request()->routeIs('backups.*')" class="text-blue-600 bg-blue-50">
+                    {{ __('Rotinas de Backup') }}
                 </x-responsive-nav-link>
             @endcan
             @can('ver equipa')
