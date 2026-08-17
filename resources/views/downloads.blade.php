@@ -67,10 +67,6 @@
                                             @if($item->links->isNotEmpty())
                                                 @foreach($item->links as $link)
                                                     @php
-                                                        $url = filter_var($link->link, FILTER_VALIDATE_URL) 
-                                                                ? $link->link 
-                                                                : asset('storage/' . $link->link);
-                                                        
                                                         $icone = 'fas fa-download';
                                                         $corClass = 'bg-white/10 hover:bg-white/20 border-white/20 text-white';
                                                         $texto = 'Baixar';
@@ -114,7 +110,7 @@
                                                         }
                                                     @endphp
                                                     
-                                                    <a href="{{ $url }}" target="_blank" class="flex-1 min-w-[130px] inline-flex items-center justify-center px-4 py-2.5 border rounded-xl transition-all duration-300 shadow-sm hover:shadow-md font-medium text-sm {{ $corClass }} hover:-translate-y-0.5">
+                                                    <a href="{{ route('download.go', $link->id) }}" target="_blank" class="flex-1 min-w-[130px] inline-flex items-center justify-center px-4 py-2.5 border rounded-xl transition-all duration-300 shadow-sm hover:shadow-md font-medium text-sm {{ $corClass }} hover:-translate-y-0.5">
                                                         <i class="{{ $icone }} text-lg mr-2"></i>
                                                         <span>{{ $texto }}</span>
                                                     </a>

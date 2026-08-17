@@ -277,4 +277,22 @@ class DownloadController extends Controller
             return view('downloads', ['downloads' => collect([])]);
         }
     }
+    /**
+     * Intercepta o clique, contabiliza o Hit e redireciona para a URL real.
+     */
+    public function registrarClique($id)
+    {
+        $link = \App\Models\DownloadLink::findOrFail($id);
+        
+        // Soma +1 no banco de dados automaticamente
+        $link->increment('hits');
+        
+        // Verifica se é uma URL externa (http...) ou um arquivo interno do storage
+        $urlDestino = filter_var($link->link, FILTER_VALIDATE_URL) 
+                        ? $link->link 
+                        : asset('storage/' . $link->link);
+        
+        // Redireciona o usuário (usamos away() para garantir que links externos não quebrem)
+        return redirect()->away($urlDestino);
+    }
 }

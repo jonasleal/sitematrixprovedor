@@ -33,6 +33,8 @@ Route::get('/', [HomeController::class, 'index']);
 Route::get('/planos-disponiveis', [HomeController::class, 'precadastro'])->name('precadastro');
 // Central de Downloads Pública
 Route::get('/p/downloads', [DownloadController::class, 'showPublic'])->name('downloads.show');
+// NOVO: Interceptor de Cliques (Contador de Hits)
+Route::get('/go-download/{id}', [DownloadController::class, 'registrarClique'])->name('download.go');
 
 Route::get('/sobre', function () {
     return view('sobre');
