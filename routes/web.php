@@ -47,9 +47,9 @@ Route::get('/noticias', [App\Http\Controllers\HomeController::class, 'noticias']
 
 // Rota de Leitura da Notícia Específica
 Route::get('/noticia/{slug}', function ($slug) {
-    $noticia = Noticia::where('slug', $slug)->where('ativo', true)->firstOrFail();
+    $noticia = \App\Models\Noticia::where('slug', $slug)->where('ativo', true)->firstOrFail();
     return view('noticia-interna', compact('noticia'));
-});
+})->name('noticia.show');
 
 
 
@@ -75,11 +75,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ROTAS BASE (Todos Logados Acessam)
     // ==========================================
     
-    // O Dashboard será visível, mas os cards/listas lá dentro podem ser travados via @can no Blade
-    Route::get('/dashboard', function () {
-        $leads = LeadCobertura::orderBy('created_at', 'desc')->get();
-        return view('dashboard', compact('leads'));
-    })->name('dashboard');
+    // Dashboard / CRM de Leads de Expansão
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\LeadController::class, 'index'])->name('dashboard');
+    Route::put('/admin/leads/{id}', [\App\Http\Controllers\Admin\LeadController::class, 'update'])->name('admin.leads.update');
+    Route::delete('/admin/leads/{id}', [\App\Http\Controllers\Admin\LeadController::class, 'destroy'])->name('admin.leads.destroy')->middleware('can:excluir cobertura');
 
     // Gerenciamento do próprio Perfil
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -102,6 +101,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/admin/mapa-cobertura/{id}', [PoligonoController::class, 'update'])->middleware('can:editar cobertura');
         Route::delete('/admin/mapa-cobertura/{id}', [PoligonoController::class, 'destroy'])->middleware('can:excluir cobertura');
     });
+    
 
     // PLANOS
     Route::middleware('can:ver planos')->group(function () {
