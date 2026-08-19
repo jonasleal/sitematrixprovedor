@@ -247,6 +247,7 @@
             const params = new URLSearchParams(window.location.search);
             
             if(params.has('rua')) document.getElementById('logradouro').value = params.get('rua');
+            if(params.has('numero')) document.getElementById('numero').value = params.get('numero'); // Captura o número
             if(params.has('bairro')) document.getElementById('bairro').value = params.get('bairro');
             if(params.has('cep')) document.getElementById('cep').value = params.get('cep');
             if(params.has('cidade')) document.getElementById('cidade').value = params.get('cidade');
@@ -262,15 +263,11 @@
             else document.getElementById('nome').focus();
         });
 
-        // Função utilitária para chamar o Toast do Alpine via Javascript Puro
-        function notificar(mensagem, tipo = 'erro') {
-            window.dispatchEvent(new CustomEvent('mostrar-toast', { detail: { msg: mensagem, tipo: tipo } }));
-        }
-
         async function buscarCep() {
             const inputCep = document.getElementById('cep');
             let cepNum = inputCep.value.replace(/\D/g, ''); 
             
+            // O gatilho via .value no JS não dispara o keyup, então é totalmente seguro contra duplo processamento.
             if(cepNum.length === 8) {
                 try {
                     const res = await fetch(`https://viacep.com.br/ws/${cepNum}/json/`);
@@ -296,14 +293,8 @@
             const input = document.getElementById(idCampo);
             if (!input) return;
 
-            // Pinta a borda de vermelho e adiciona um anel de destaque (Ring) piscante
             input.classList.remove('border-gray-600', 'focus:border-cyan-400', 'focus:border-pink-400');
-            input.classList.add('border-red-500', 'focus:border-red-500', 'ring-4', 'ring-red-500/30', 'animate-pulse');
-
-            // Remove o efeito de piscar após 2 segundos, mas mantém a borda vermelha
-            setTimeout(() => {
-                input.classList.remove('ring-4', 'ring-red-500/30', 'animate-pulse');
-            }, 2000);
+            input.classList.add('border-red-500', 'focus:border-red-500');
 
             let msgErro = document.getElementById('erro-msg-' + idCampo);
             if (!msgErro) {
@@ -338,8 +329,8 @@
             if(resto !== parseInt(cpf.substring(10, 11))) return false;
             return true;
         }
-        
-        function abrirModalWhatsappDuplicado(cpf) {
+
+		function abrirModalWhatsappDuplicado(cpf) {
             const modal = document.getElementById('modal-cpf-duplicado');
             const content = document.getElementById('modal-cpf-content');
             const btnWhats = document.getElementById('btn-whatsapp-duplicado');
@@ -364,33 +355,6 @@
             content.classList.add('scale-95');
             setTimeout(() => modal.classList.add('hidden'), 300);
         }
-        function fecharModalFalha() {
-            const modal = document.getElementById('modal-sistema-caiu');
-            const content = document.getElementById('modal-sistema-content');
-            modal.classList.add('opacity-0');
-            content.classList.add('scale-95');
-            setTimeout(() => modal.classList.add('hidden'), 300);
-        }
-
-        // ==========================================
-        // FLUXO FALLBACK WHATSAPP (SGP FORA DO AR)
-        // ==========================================
-        function abrirFallbackWhatsapp(payload, planoNome) {
-            const numeroEmpresa = '558796136109'; 
-            // Formatação do texto de contingência
-            const textoPronto = `Olá! Estava tentando fazer o pré-cadastro pelo site e apresentou problema de conexão. Aqui estão meus dados:\n\n*Nome:* ${payload.nome}\n*CPF:* ${payload.cpfcnpj}\n*Celular:* ${payload.celular}\n*Email:* ${payload.email}\n*Endereço:* ${payload.logradouro}, ${payload.numero} - ${payload.bairro}, ${payload.cidade}-${payload.uf}\n*Plano Escolhido:* ${planoNome}`;
-            
-            const btnWhats = document.getElementById('btn-whatsapp-fallback');
-            btnWhats.href = `https://wa.me/${numeroEmpresa}?text=${encodeURIComponent(textoPronto)}`;
-
-            const modal = document.getElementById('modal-sistema-caiu');
-            const content = document.getElementById('modal-sistema-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                content.classList.remove('scale-95');
-            }, 50);
-        }
 
         // ==========================================
         // FLUXO PRINCIPAL DE ENVIO
@@ -400,14 +364,12 @@
             limparErrosVisuais();
             
             const btn = document.getElementById('btn-submit');
-            
             let temErroFront = false;
             let primeiroCampoErro = null;
 
             const planoSelecionado = document.querySelector('input[name="plano_id"]:checked');
             if(!planoSelecionado) {
-                // SUBSTITUIÇÃO 1
-                notificar("Por favor, selecione um plano de internet acima.", "erro");
+                alert("Por favor, selecione um plano de internet acima.");
                 return;
             }
 
@@ -423,14 +385,6 @@
                 mostrarErroVisual('celular', 'Digite um celular válido (com DDD).');
                 if(!temErroFront) primeiroCampoErro = document.getElementById('celular');
                 temErroFront = true;
-            }
-
-            // Validação do Contrato
-            const aceiteCheckbox = document.getElementById('aceite_contrato');
-            if (aceiteCheckbox && !aceiteCheckbox.checked) {
-                mostrarErroVisual('aceite_contrato', 'Você precisa ler e aceitar o contrato para prosseguir.');
-                temErroFront = true;
-                if(!primeiroCampoErro) primeiroCampoErro = aceiteCheckbox;
             }
 
             if (temErroFront) {
@@ -455,8 +409,7 @@
                 cidade: document.getElementById('cidade').value,
                 cep: document.getElementById('cep').value.replace(/\D/g, ''),
                 uf: document.getElementById('uf').value,
-                plano_id: planoSelecionado.value,
-                aceite_contrato: aceiteCheckbox ? (aceiteCheckbox.checked ? 1 : 0) : null
+                plano_id: planoSelecionado.value
             };
 
             const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -469,52 +422,24 @@
                 });
 
                 if(res.ok) {
-                    // 1. Dispara o Confete!
-                    confetti({
-                        particleCount: 150,
-                        spread: 80,
-                        origin: { y: 0.6 },
-                        colors: ['#22c55e', '#008CCC', '#ffffff', '#f2167dff'] // Cores da Matrix (Verde, Azul, Branco, Rosa)
-                    });
-
-                    // 2. Mostra o Modal de Sucesso Escurecendo a tela
-                    const modalSucesso = document.getElementById('modal-sucesso');
-                    const contentSucesso = document.getElementById('modal-sucesso-content');
-                    
-                    modalSucesso.classList.remove('hidden');
-                    setTimeout(() => {
-                        modalSucesso.classList.remove('opacity-0');
-                        contentSucesso.classList.remove('scale-95');
-                    }, 50);
-
+                    alert("Sucesso! Seu pré-cadastro foi enviado. Nossa equipe entrará em contato pelo WhatsApp em instantes.");
                     sessionStorage.removeItem('plano_escolhido_matrix');
-                    
-                    
+                    window.location.href = "/";
                 } else {
                     const err = await res.json();
                     
-                    if (err.whatsapp_fallback) {
-                        // Captura o nome do plano selecionado visualmente para enviar
-                        const nomePlanoDiv = planoSelecionado.closest('label').querySelector('h4');
-                        const planoNome = nomePlanoDiv ? nomePlanoDiv.innerText : 'Plano Matrix';
-                        
-                        abrirFallbackWhatsapp(payload, planoNome);
-                        btn.innerText = "Concluir Pré-Cadastro";
-                        btn.disabled = false;
-                        return;
-                    }
-
                     if (err.is_cpf_duplicado) {
                         abrirModalWhatsappDuplicado(cpfDigitado);
                         btn.innerText = "Concluir Pré-Cadastro";
                         btn.disabled = false;
-                        return;
+                        return; 
                     }
 
                     if (err.details && typeof err.details === 'object') {
                         let focado = false;
                         for (const [campo, mensagens] of Object.entries(err.details)) {
                             mostrarErroVisual(campo, mensagens[0]);
+                            
                             if (!focado) {
                                 const inputAlvo = document.getElementById(campo);
                                 if(inputAlvo) {
@@ -524,20 +449,18 @@
                             }
                         }
                     } else {
-                        notificar(err.message || "Erro desconhecido. Tente novamente.", "erro");
+                        alert(err.message || "Erro desconhecido. Tente novamente.");
                     }
                     
                     btn.innerText = "Concluir Pré-Cadastro";
                     btn.disabled = false;
                 }
             } catch (error) {
-                // SUBSTITUIÇÃO 4
-                notificar("Falha de conexão com os servidores Matrix.", "erro");
+                alert("Falha de conexão com os servidores Matrix.");
                 btn.innerText = "Concluir Pré-Cadastro";
                 btn.disabled = false;
             }
         }
-
     </script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 @endsection

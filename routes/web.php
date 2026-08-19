@@ -52,7 +52,10 @@ Route::get('/noticia/{slug}', function ($slug) {
 })->name('noticia.show');
 
 
-
+// Rota de Teste Isolado do Autocomplete
+Route::get('/teste-autocomplete', function () {
+    return view('teste-autocomplete');
+});
 	
 
 
